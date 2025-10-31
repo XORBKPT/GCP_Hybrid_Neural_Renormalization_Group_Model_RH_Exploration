@@ -2,9 +2,9 @@ Deploying on GCP.
 
 -----
 
-## (a) Full-Batch vs. Mini-Batch:
+## Full-Batch vs. Mini-Batch:
 
-The choice is **scale-up vs. scale-out** exploration with A/B testing.
+Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
 
 | Feature | `main_fullbatch.py` (Team 1) | `main_minibatch.py` (Team 2) |
 | :--- | :--- | :--- |
