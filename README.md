@@ -1,5 +1,7 @@
 # GCP Hybrid Neural Renormalization Model for the RH
 
+*intended for post-doctoral researchers in number theory and quantum field theory on weekends*
+
 The RH is a statement about infinity. Any true mechanism allowing for sub-exponential prediction is likely an emergent property that *only* manifests at massive scale. Team 2's GNN, fed with 100M+ data points and constrained only by the *statistical signature* of quantum chaos (the RMT priors), is free to discover a "true" internal mechanism that we (as human researchers), may not even have the language for yet.
 
 Emergent Properties at Scale: So the RH *is* a statement about all zeros N ==> Infinity. This much we know. Therefore any property that allows for a sub-exponential prediction (e.g., a hidden fractal structure, a new scaling law) is almost certainly an emergent property that is only visible at massive heights. Team 1 is permanently blind to these emergent, high-N phenomena. Team 2 is the only one of the two that has a JWST lens powerful enough to see them, if there.
@@ -8,11 +10,9 @@ Emergent Properties at Scale: So the RH *is* a statement about all zeros N ==> I
 
 The model operationalizes a novel dynamical framework by merging Renormalization Group (RG) flows with Graph Neural Networks (GNNs). The GNN models the "Primal Manifold," a profinite space encoding primes as topological defects, while physics-informed losses enforce theoretical priors from Random Matrix Theory (RMT) and QFT scale-invariance.
 
-This work is intended for post-doctoral researchers in number theory and quantum field theory.
-
 ## Overview
 
-The core hypothesis is that the zeros of the Riemann zeta function ($ \rho_n $) can be predicted by a GNN learning the RG flow dynamics on a graph representing the Primal Manifold. The model's key components are:
+The core hypothesis is that the zeros of the Riemann zeta function can be predicted by a GNN learning the RG flow dynamics on a graph representing the Primal Manifold. The model's components are:
 
 1.  **Primal Manifold Graph:** A sparse graph where nodes are the ordinal indices of the zeros.
 2.  **Hybrid GNN-MLP:** A GNN (using `GCNConv` layers) processes the graph structure, while an MLP backbone processes the node features.
@@ -21,7 +21,7 @@ The core hypothesis is that the zeros of the Riemann zeta function ($ \rho_n $) 
     * **RMT (GUE) Prior:** We enforce the Montgomery Conjecture by matching the statistics of the *predicted unfolded spacings* to the Gaussian Unitary Ensemble (GUE). This is done via two complementary losses:
         * **GUE-NLL:** A Negative Log-Likelihood loss against the GUE PDF (Wigner Surmise).
         * **GUE-MMD:** A Maximum Mean Discrepancy loss, which compares the *distribution* of predicted spacings to a "simulated Hamiltonian" (samples from the GUE PDF).
-    * **RG-Flow Penalty:** (Full-batch only) A loss term that enforces scale invariance ($ \beta=0 $), a key property of the RG fixed point at the critical line.
+    * **RG-Flow Penalty:** (Full-batch only) A loss term that enforces scale invariance, a key property of the RG fixed point at the critical line.
 
 ## Scalability
 
