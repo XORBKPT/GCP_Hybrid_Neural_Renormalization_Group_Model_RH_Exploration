@@ -28,7 +28,7 @@ Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
   * **Focus:** You must push $N$ as high as possible 100k, 1M.. to see if new statistical patterns or anomalies emerge at heights no one has ever modeled this way.
   * **Challenge:** Ensure the RMT loss, computed on *contiguous blocks within clusters*, is a stable-enough signal.
 
-The question: **Is the `rg_penalty` essential, or can the RMT priors alone guide the model at $N=1M$?** Team 1 and Team 2 will be able answer this together.
+The question: **Is the `rg_penalty` essential, or can the RMT priors alone guide the model at N=1M ?** Team 1 and Team 2 will be able answer this together.
 
 -----
 
