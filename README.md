@@ -31,7 +31,7 @@ The primary bottleneck in this research is scaling N (the number of zeros).
 | :--- | :--- | :--- |
 | **A/B Testing** | **Full-Batch Training** | **Mini-Batch Training (Cluster-GCN)** |
 | **Graph Library** | Manual `torch.sparse.mm` | `torch_geometric` |
-| **Use Case** | $ N \le 50,000 $ on high-memory GCP/AWS instance (e.g., A100 80GB). | $ N \ge 100,000 up to 10^9+ . Scales to any size. |
+| **Use Case** | $ N \le 50,000 $ on high-memory GCP instance A100 80GB. | $ N \ge 100,000 up to 10^9+ . Scales to any size. |
 | **Pros** | Conceptually simpler. Can use the global `rg_penalty` loss. | **Extremely memory efficient.** Can run on a single GPU. |
 | **Cons** | Hits a hard memory wall. | More complex data loading. |
 | **Key Trade-off**| **Loses the global `rg_penalty`** | **Keeps structured `RMT` losses** |
