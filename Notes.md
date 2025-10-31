@@ -95,3 +95,5 @@ Here is the optimal setup for each team.
       * **Cons:**
           * Loses the `rg_penalty` loss, which is a significant research compromise.
           * The *one-time* graph partitioning by `ClusterData` (for $N=1M$) might take a while, but it only has to be done once.
+
+      93E3 BEBC C164 D766
