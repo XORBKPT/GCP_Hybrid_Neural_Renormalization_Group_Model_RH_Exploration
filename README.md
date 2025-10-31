@@ -14,10 +14,10 @@ This work is intended for post-doctoral researchers in number theory and quantum
 
 The core hypothesis is that the zeros of the Riemann zeta function ($ \rho_n $) can be predicted by a GNN learning the RG flow dynamics on a graph representing the Primal Manifold. The model's key components are:
 
-1.  **Primal Manifold Graph:** A sparse graph where nodes are the ordinal indices $ n $ of the zeros. Edges connect $ (n, n+1) $ (for ordinal flow) and $ (i, j) $ where $ i \equiv j \pmod p $ for a set of small primes $ p $. This $ p $-adic / idelic connection structure mimics the profinite geometry.
-2.  **Hybrid GNN-MLP:** A GNN (using `GCNConv` layers) processes the graph structure, while an MLP backbone processes the node features ($ \log(n) $).
-3.  **Physics-Informed Losses:**
-    * **MSE:** Standard regression loss for positional accuracy ($ \text{Im}(\rho_n) $).
+1.  **Primal Manifold Graph:** A sparse graph where nodes are the ordinal indices of the zeros.
+2.  **Hybrid GNN-MLP:** A GNN (using `GCNConv` layers) processes the graph structure, while an MLP backbone processes the node features.
+3.  *Physics-Informed Losses:*
+    * **MSE:** Standard regression loss for positional accuracy.
     * **RMT (GUE) Prior:** We enforce the Montgomery Conjecture by matching the statistics of the *predicted unfolded spacings* to the Gaussian Unitary Ensemble (GUE). This is done via two complementary losses:
         * **GUE-NLL:** A Negative Log-Likelihood loss against the GUE PDF (Wigner Surmise).
         * **GUE-MMD:** A Maximum Mean Discrepancy loss, which compares the *distribution* of predicted spacings to a "simulated Hamiltonian" (samples from the GUE PDF).
@@ -25,14 +25,14 @@ The core hypothesis is that the zeros of the Riemann zeta function ($ \rho_n $) 
 
 ## Scalability Framework
 
-The primary bottleneck in this research is scaling $ N $ (the number of zeros). We provide two distinct frameworks for this, allowing you to choose based on your available compute resources.
+The primary bottleneck in this research is scaling N (the number of zeros).
 
 | File | `main_fullbatch.py` | `main_minibatch.py` |
 | :--- | :--- | :--- |
-| **Strategy** | **Full-Batch Training** | **Mini-Batch Training (Cluster-GCN)** |
+| **A/B Testing** | **Full-Batch Training** | **Mini-Batch Training (Cluster-GCN)** |
 | **Graph Library** | Manual `torch.sparse.mm` | `torch_geometric` |
-| **Use Case** | $ N \le 50,000 $ on high-memory GCP/AWS instance (e.g., A100 80GB). | $ N \ge 100,000 $ up to $ 10^9+ $. Scales to any size. |
-| **Pros** | Conceptually simpler. Can use the global `rg_penalty` loss. | **Extremely memory efficient.** Can run on a single consumer GPU (e.g., RTX 4090). |
+| **Use Case** | $ N \le 50,000 $ on high-memory GCP/AWS instance (e.g., A100 80GB). | $ N \ge 100,000 up to 10^9+ . Scales to any size. |
+| **Pros** | Conceptually simpler. Can use the global `rg_penalty` loss. | **Extremely memory efficient.** Can run on a single GPU. |
 | **Cons** | Hits a hard memory wall. | More complex data loading. |
 | **Key Trade-off**| **Loses the global `rg_penalty`** | **Keeps structured `RMT` losses** |
 
@@ -40,11 +40,11 @@ The primary bottleneck in this research is scaling $ N $ (the number of zeros). 
 
 The `rg_penalty` loss from the original research code:
 `rg_penalty = torch.mean((scaled_pred / scale_factor - pred)**2)`
-...requires **two full-graph forward passes** to compute. This is perfectly fine in a full-batch setting.
+...requires **two full-graph forward passes** to compute. Fine in full-batch.
 
-In a mini-batch setting, this is computationally infeasible and conceptually incompatible. We *cannot* check a *global* scale-invariance property using *only* a small subgraph.
+In mini-batch, this is computationally infeasible. We *cannot* check a *global* scale-invariance property using a small subgraph.
 
-Therefore, `main_minibatch.py` **removes this loss term**. It relies *entirely* on the RMT (NLL and MMD) losses to act as the physics-informed regularizer. This is a necessary research trade-off for scalability. The `main_fullbatch.py` script *retains* this loss, as it uses the "compute version" of the Hamiltonian simulation you requested.
+So, `main_minibatch.py` **removes this loss term**. It relies totally on the RMT (NLL and MMD) losses to act as the physics-informed regularizer. This is a necessary research trade-off for scalability. The `main_fullbatch.py` script *retains* this loss, as it uses the "compute version" of the Hamiltonian simulation (compute, non-QC, included)
 
 ---
 
