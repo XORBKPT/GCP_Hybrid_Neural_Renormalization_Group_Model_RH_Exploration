@@ -115,7 +115,7 @@ This script will:
 
 ### Step 2 (Option B): Run the Mini-Batch Model
 
-This is the scalable framework, recommended for $ N \ge 10,000 $ or for systems with limited VRAM.
+This is the scalable framework, recommended for N 10,000 or for systems with limited VRAM.
 
 ```bash
 python main_minibatch.py
