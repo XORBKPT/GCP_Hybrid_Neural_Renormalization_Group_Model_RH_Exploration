@@ -34,9 +34,9 @@ The primary bottleneck in this research is scaling $ N $ (the number of zeros). 
 | **Use Case** | $ N \le 50,000 $ on high-memory GCP/AWS instance (e.g., A100 80GB). | $ N \ge 100,000 $ up to $ 10^9+ $. Scales to any size. |
 | **Pros** | Conceptually simpler. Can use the global `rg_penalty` loss. | **Extremely memory efficient.** Can run on a single consumer GPU (e.g., RTX 4090). |
 | **Cons** | Hits a hard memory wall. | More complex data loading. |
-| **Key Trade-off**| 🔴 **Loses the global `rg_penalty`** | ✅ **Keeps structured `RMT` losses** |
+| **Key Trade-off**| **Loses the global `rg_penalty`** | **Keeps structured `RMT` losses** |
 
-### 🚨 The Critical Trade-Off: `rg_penalty`
+### Trade-Off: `rg_penalty`
 
 The `rg_penalty` loss from the original research code:
 `rg_penalty = torch.mean((scaled_pred / scale_factor - pred)**2)`
@@ -48,9 +48,9 @@ Therefore, `main_minibatch.py` **removes this loss term**. It relies *entirely* 
 
 ---
 
-## 🚀 Setup & Installation
+## Setup & Installation
 
-We recommend using a `conda` environment.
+Using a `conda` environment.
 
 1.  **Clone the repository:**
     ```bash
@@ -83,17 +83,18 @@ We recommend using a `conda` environment.
     ```bash
     pip install numpy networkx mpmath scipy
     ```
-    (A `requirements.txt` file is also provided).
 
 ---
 
-## 📈 Running the Models
+## Run
 
 ### Step 1: Generate the Dataset
 
-You only need to do this once. The script will generate the first 10,000 (or more) zeros and save them to `zeta_zeros_10k.txt`.
+The script will generate the first 10,000 (or more) zeros and save them to `zeta_zeros_10k.txt`.
 
 We use the `main_fullbatch.py` script for this, as it contains the generation helper.
+
+For larger data sets use generate_and_save_zeros.md
 
 ```bash
 # Generate the first 10,000 zeros
@@ -128,7 +129,7 @@ This script will:
 4.  Train the model, computing RMT losses only on contiguous spacings found *within* each cluster.
 5.  Print training progress and final extrapolation.
 
-## 🗂️ Code Structure
+## Code:
 
 ```
 .
@@ -140,12 +141,10 @@ This script will:
 └── clusters/           # Directory for PyG clusters (generated)
 ```
 
-## 🧠 Future Research Directions
-
-This framework is the foundation for several next steps:
+## Next Steps
 
 * **Scaling $N$:** Use the `main_minibatch.py` framework to train on $ N=10^5, 10^6, \dots $ to check for emergent statistical anomalies at extreme heights.
-* **Full Adelic Graph:** Enhance the `create_sparse_adelic_graph` function to model the full adelic space $ \mathbb{A}_{\mathbb{Q}} $ more faithfully, perhaps by incorporating the "archimedean" component $ \mathbb{R} $ or more complex $ p $-adic topologies.
-* **Hamiltonian Simulation:** The GUE-MMD loss is our "compute version" of a Hamiltonian simulation. The next step is to replace this statistical prior with a true quantum algorithm (e.g., VQE, QPE) on a quantum computer to find the spectrum of a candidate Hilbert-Pólya operator.
+* **Full Adelic Graph:** Enhance the `create_sparse_adelic_graph` function to model the full adelic space $ \mathbb{A}_{\mathbb{Q}} $ , incorporate the "archimedean" component $ \mathbb{R} $ or more complex $ p $-adic topologies.
+* **Hamiltonian Simulation:** The GUE-MMD loss is our "compute version" of a Hamiltonian simulation. Replace this statistical prior with a true quantum algorithm (e.g., VQE, QPE) on a QC to find the spectrum of a candidate Hilbert-Pólya operator.
 
-
+93E3 BEBC C164 D766
