@@ -21,18 +21,20 @@ The core hypothesis is that the zeros of the Riemann zeta function can be predic
         * **GUE-MMD:** A Maximum Mean Discrepancy loss, which compares the *distribution* of predicted spacings to a "simulated Hamiltonian" (samples from the GUE PDF).
     * **RG-Flow Penalty:** (Full-batch only) A loss term that enforces scale invariance, a key property of the RG fixed point at the critical line.
 
-## Scalability
+## Full-Batch vs. Mini-Batch | Deploying on GCP:
 
-The primary bottleneck in this research is scaling N (the number of zeros).
+Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
 
-| File | `main_fullbatch.py` | `main_minibatch.py` |
+| Feature | `main_fullbatch.py` (Team 1) | `main_minibatch.py` (Team 2) |
 | :--- | :--- | :--- |
-| **A/B Testing** | **Full-Batch Training** | **Mini-Batch Training (Cluster-GCN)** |
-| **Graph Library** | Manual `torch.sparse.mm` | `torch_geometric` |
-| **Use Case** | $ N \le 50,000 $ on high-memory GCP instance A100 80GB. | $ N \ge 100,000 up to 10^9+ . Scales to any size. |
-| **Pros** | Conceptually simpler. Can use the global `rg_penalty` loss. | **Extremely memory efficient.** Can run on a single GPU. |
-| **Cons** | Hits a hard memory wall. | More complex data loading. |
-| **Key Trade-off**| **Loses the global `rg_penalty`** | **Keeps structured `RMT` losses** |
+| **Core** | **Full-Graph (Scale-Up)** | **Graph Partitioning (Scale-Out)** |
+| **How to do it** | Loads the *entire* $N \times N$ graph into GPU VRAM for *one* massive computation per epoch. | Uses `Cluster-GCN` to partition the graph into $k$ subgraphs. Loads *one subgraph* at a time into VRAM. |
+| **Memory (VRAM)** | **Extremely High.** VRAM is the hard bottleneck. | **Extremely Low.** Depends on cluster size (N/k), not N. |
+| **Scalability** | **Limited.** Hits a hard VRAM wall. N=10k is fine. N=50k might work, N=100k unlikely. | **Near-Infinite.** Can scale to N = 10^9 or more by increasing k (number of partitions). |
+| **Dependencies** | Self-contained (PyTorch, SciPy). | **Requires PyTorch Geometric (PyG)** and its sparse dependencies. |
+| **Training** | **Stable & Deterministic.** The gradient is computed from the *entire* dataset at once. | **Stochastic & Fast.** Each epoch is fast, but gradients are "noisier," as they come from subgraphs. |
+| **Loss Function** | **Complete.** Can compute all four losses: MSE, GUE-NLL, GUE-MMD, and the **global `rg_penalty`**. | **Incomplete (by necessity).** |
+| **Key Trade-Off** | **Pro:** computes the global `rg_penalty` loss, which is theoretically important. <br> **Con:** Cannot scale to massive $N$. | **Pro:** Can scale to *any* $N$. <br> **Con:** **Loses the global `rg_penalty` loss.** A research trade-off, this is fine. |
 
 ### Trade-Off: `rg_penalty`
 
