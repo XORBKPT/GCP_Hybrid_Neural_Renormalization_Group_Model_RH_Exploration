@@ -1,0 +1,146 @@
+# Hybrid Neural Renormalization Group Model for RH Verification
+
+This repository contains the research framework and code for a hybrid machine learning model aimed at verifying the Riemann Hypothesis (RH) at high heights.
+
+The model operationalizes a novel dynamical framework by merging Renormalization Group (RG) flows with Graph Neural Networks (GNNs). The GNN models the "Primal Manifold," a profinite space encoding primes as topological defects, while physics-informed losses enforce theoretical priors from Random Matrix Theory (RMT) and QFT scale-invariance.
+
+This work is intended for post-doctoral researchers in number theory and quantum field theory.
+
+## Overview
+
+The core hypothesis is that the zeros of the Riemann zeta function ($ \rho_n $) can be predicted by a GNN learning the RG flow dynamics on a graph representing the Primal Manifold. The model's key components are:
+
+1.  **Primal Manifold Graph:** A sparse graph where nodes are the ordinal indices $ n $ of the zeros. Edges connect $ (n, n+1) $ (for ordinal flow) and $ (i, j) $ where $ i \equiv j \pmod p $ for a set of small primes $ p $. This $ p $-adic / idelic connection structure mimics the profinite geometry.
+2.  **Hybrid GNN-MLP:** A GNN (using `GCNConv` layers) processes the graph structure, while an MLP backbone processes the node features ($ \log(n) $).
+3.  **Physics-Informed Losses:**
+    * **MSE:** Standard regression loss for positional accuracy ($ \text{Im}(\rho_n) $).
+    * **RMT (GUE) Prior:** We enforce the Montgomery Conjecture by matching the statistics of the *predicted unfolded spacings* to the Gaussian Unitary Ensemble (GUE). This is done via two complementary losses:
+        * **GUE-NLL:** A Negative Log-Likelihood loss against the GUE PDF (Wigner Surmise).
+        * **GUE-MMD:** A Maximum Mean Discrepancy loss, which compares the *distribution* of predicted spacings to a "simulated Hamiltonian" (samples from the GUE PDF).
+    * **RG-Flow Penalty:** (Full-batch only) A loss term that enforces scale invariance ($ \beta=0 $), a key property of the RG fixed point at the critical line.
+
+## Scalability Framework
+
+The primary bottleneck in this research is scaling $ N $ (the number of zeros). We provide two distinct frameworks for this, allowing you to choose based on your available compute resources.
+
+| File | `main_fullbatch.py` | `main_minibatch.py` |
+| :--- | :--- | :--- |
+| **Strategy** | **Full-Batch Training** | **Mini-Batch Training (Cluster-GCN)** |
+| **Graph Library** | Manual `torch.sparse.mm` | `torch_geometric` |
+| **Use Case** | $ N \le 50,000 $ on high-memory GCP/AWS instance (e.g., A100 80GB). | $ N \ge 100,000 $ up to $ 10^9+ $. Scales to any size. |
+| **Pros** | Conceptually simpler. Can use the global `rg_penalty` loss. | **Extremely memory efficient.** Can run on a single consumer GPU (e.g., RTX 4090). |
+| **Cons** | Hits a hard memory wall. | More complex data loading. |
+| **Key Trade-off**| 🔴 **Loses the global `rg_penalty`** | ✅ **Keeps structured `RMT` losses** |
+
+### 🚨 The Critical Trade-Off: `rg_penalty`
+
+The `rg_penalty` loss from the original research code:
+`rg_penalty = torch.mean((scaled_pred / scale_factor - pred)**2)`
+...requires **two full-graph forward passes** to compute. This is perfectly fine in a full-batch setting.
+
+In a mini-batch setting, this is computationally infeasible and conceptually incompatible. We *cannot* check a *global* scale-invariance property using *only* a small subgraph.
+
+Therefore, `main_minibatch.py` **removes this loss term**. It relies *entirely* on the RMT (NLL and MMD) losses to act as the physics-informed regularizer. This is a necessary research trade-off for scalability. The `main_fullbatch.py` script *retains* this loss, as it uses the "compute version" of the Hamiltonian simulation you requested.
+
+---
+
+## 🚀 Setup & Installation
+
+We recommend using a `conda` environment.
+
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repo-url>
+    cd <your-repo-name>
+    ```
+
+2.  **Create Conda Environment:**
+    ```bash
+    conda create -n neural-rg python=3.10
+    conda activate neural-rg
+    ```
+
+3.  **Install PyTorch:**
+    (Visit [pytorch.org](https://pytorch.org/) for the command specific to your CUDA version.)
+    ```bash
+    # Example for CUDA 12.1
+    conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+    ```
+
+4.  **Install PyTorch Geometric (PyG):**
+    This is required for the mini-batch framework. PyG's installation is tied to your PyTorch/CUDA version.
+    ```bash
+    # Example for PyTorch 2.1 / CUDA 12.1
+    pip install torch_geometric
+    pip install torch_scatter torch_sparse torch_cluster torch_spline_conv -f [https://data.pyg.org/whl/torch-2.1.0+cu121.html](https://data.pyg.org/whl/torch-2.1.0+cu121.html)
+    ```
+
+5.  **Install other dependencies:**
+    ```bash
+    pip install numpy networkx mpmath scipy
+    ```
+    (A `requirements.txt` file is also provided).
+
+---
+
+## 📈 Running the Models
+
+### Step 1: Generate the Dataset
+
+You only need to do this once. The script will generate the first 10,000 (or more) zeros and save them to `zeta_zeros_10k.txt`.
+
+We use the `main_fullbatch.py` script for this, as it contains the generation helper.
+
+```bash
+# Generate the first 10,000 zeros
+python main_fullbatch.py --generate_zeros=10000
+```
+*Note: Generating 10k zeros can take several minutes. Generating 100k+ can take hours.*
+
+### Step 2 (Option A): Run the Full-Batch Model
+
+This is the baseline, good for $ N=10,000 $ on a system with a powerful GPU (e.g., > 32GB VRAM).
+
+```bash
+python main_fullbatch.py
+```
+This script will:
+1.  Load all 10,000 zeros.
+2.  Build the full $ 10000 \times 10000 $ sparse adjacency matrix in memory.
+3.  Perform full-batch gradient descent.
+4.  Print training progress and final extrapolation.
+
+### Step 2 (Option B): Run the Mini-Batch Model
+
+This is the scalable framework, recommended for $ N \ge 10,000 $ or for systems with limited VRAM.
+
+```bash
+python main_minibatch.py
+```
+This script will:
+1.  Load all 10,000 zeros.
+2.  Build the graph and partition it into 100 clusters (subgraphs), saving them to a new `clusters/` directory. (Only on the first run).
+3.  Iterate through the *clusters* (1 cluster = 1 mini-batch).
+4.  Train the model, computing RMT losses only on contiguous spacings found *within* each cluster.
+5.  Print training progress and final extrapolation.
+
+## 🗂️ Code Structure
+
+```
+.
+├── main_fullbatch.py   # Full-batch model (Baseline, N<=50k)
+├── main_minibatch.py   # Mini-batch model (Scalable, N~1M+)
+├── README.md           # This file
+|
+├── zeta_zeros_10k.txt  # Data file (generated)
+├── clusters/           # Directory for PyG clusters (generated)
+└── requirements.txt    # pip requirements
+```
+
+## 🧠 Future Research Directions
+
+This framework is the foundation for several next steps:
+
+* **Scaling $N$:** Use the `main_minibatch.py` framework to train on $ N=10^5, 10^6, \dots $ to check for emergent statistical anomalies at extreme heights.
+* **Full Adelic Graph:** Enhance the `create_sparse_adelic_graph` function to model the full adelic space $ \mathbb{A}_{\mathbb{Q}} $ more faithfully, perhaps by incorporating the "archimedean" component $ \mathbb{R} $ or more complex $ p $-adic topologies.
+* **Hamiltonian Simulation:** The GUE-MMD loss is our "compute version" of a Hamiltonian simulation. The next step is to replace this statistical prior with a true quantum algorithm (e.g., VQE, QPE) on a quantum computer to find the spectrum of a candidate Hilbert-Pólya operator.
