@@ -1,7 +1,7 @@
 
 -----
 
-## Full-Batch vs. Mini-Batch Deploying on GCP:
+## Full-Batch vs. Mini-Batch | Deploying on GCP:
 
 Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
 
@@ -10,7 +10,7 @@ Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
 | **Core** | **Full-Graph (Scale-Up)** | **Graph Partitioning (Scale-Out)** |
 | **How to do it** | Loads the *entire* $N \times N$ graph into GPU VRAM for *one* massive computation per epoch. | Uses `Cluster-GCN` to partition the graph into $k$ subgraphs. Loads *one subgraph* at a time into VRAM. |
 | **Memory (VRAM)** | **Extremely High.** VRAM is the hard bottleneck. | **Extremely Low.** Depends on cluster size (N/k), not N. |
-| **Scalability** | **Limited.** Hits a hard VRAM wall. N=10k is fine. N=50k might work, N=100k unlikely. | **Near-Infinite.** Can scale to $N = 10^9+$ by simply increasing $k$ (number of partitions). |
+| **Scalability** | **Limited.** Hits a hard VRAM wall. N=10k is fine. N=50k might work, N=100k unlikely. | **Near-Infinite.** Can scale to $N = 10^9 or more by increasing k (number of partitions). |
 | **Dependencies** | Self-contained (PyTorch, SciPy). | **Requires PyTorch Geometric (PyG)** and its sparse dependencies. |
 | **Training** | **Stable & Deterministic.** The gradient is computed from the *entire* dataset at once. | **Stochastic & Fast.** Each epoch is fast, but gradients are "noisier," as they come from subgraphs. |
 | **Loss Function** | **Complete.** Can compute all four losses: MSE, GUE-NLL, GUE-MMD, and the **global `rg_penalty`**. | **Incomplete (by necessity).** |
@@ -20,7 +20,7 @@ Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
 
   * **Mission:** to **test theoretical purity**. The `rg_penalty` (scale-invariance) loss is a core part of your original QFT-inspired hypothesis.
   * **Focus:** Verify if this loss term is *actually* necessary for convergence and accurate extrapolation.
-  * **Limitation:** Limited to 10k-50k zeros. Goal is to find the best possible result *within this high-but-limited regime*.
+  * **Limitation:** Limited to 10k-50k zeros. Goal is to find the best possible result *within this high (but limited vs infinity) regime*.
 
 **Team 2 (Mini-Batch):**
 
@@ -42,7 +42,7 @@ Get **answers as fast as possible**.
 
       * **Service:** Use **Vertex AI**. Do not manually manage VMs (GCE). Vertex AI is Google's managed platform, built for this kind of work.
       * **Data Storage:** Create a **Google Cloud Storage (GCS) Bucket**. Store your `zeta_zeros_10k.txt` (and later, your 1M zero file) here. Training jobs will read directly from this bucket.
-      * **Code Repository:** Use **Artifact Registry** to store your custom Docker container images. Professional, scientifically reproducible way.
+      * **Code Repository:** Use **Artifact Registry** to store your custom Docker container images; scientifically useful (reproducible).
 
 2.  **Environment (Container):**
 
@@ -52,9 +52,9 @@ Get **answers as fast as possible**.
 
 3.  **Experiment Tracking (Crucial):**
 
-      * Use **Vertex AI Experiments**. Your models have many (hyper)parameters (loss weights, $N$, primes) *must* be logged every run.
+      * Use **Vertex AI Experiments**. Team models have many (hyper)parameters (loss weights, $N$, primes) must be logged every run.
       * Python script can use the Google Cloud AI Platform SDK to log metrics (e.g., `val_loss`, `extrapolation_error`, `gue_nll`) for each epoch.
-      * This creates a leaderboard of all team experiments, essential for post-docs docs <80)
+      * This creates a leaderboard of all team experiments, essential for post-doc docs and team scores <80)
 
 -----
 
