@@ -23,7 +23,7 @@ The core hypothesis is that the zeros of the Riemann zeta function ($ \rho_n $) 
         * **GUE-MMD:** A Maximum Mean Discrepancy loss, which compares the *distribution* of predicted spacings to a "simulated Hamiltonian" (samples from the GUE PDF).
     * **RG-Flow Penalty:** (Full-batch only) A loss term that enforces scale invariance ($ \beta=0 $), a key property of the RG fixed point at the critical line.
 
-## Scalability Framework
+## Scalability
 
 The primary bottleneck in this research is scaling N (the number of zeros).
 
@@ -48,9 +48,9 @@ So, `main_minibatch.py` **removes this loss term**. It relies totally on the RMT
 
 ---
 
-## Setup & Installation
+## Setup
 
-Using a `conda` environment.
+Use a `conda` environment.
 
 1.  **Clone the repository:**
     ```bash
@@ -88,13 +88,13 @@ Using a `conda` environment.
 
 ## Run
 
-### Step 1: Generate the Dataset
+### Step 1: Generate Dataset
 
 The script will generate the first 10,000 (or more) zeros and save them to `zeta_zeros_10k.txt`.
 
 We use the `main_fullbatch.py` script for this, as it contains the generation helper.
 
-For larger data sets use generate_and_save_zeros.md
+*For larger data sets use generate_and_save_zeros.md*
 
 ```bash
 # Generate the first 10,000 zeros
