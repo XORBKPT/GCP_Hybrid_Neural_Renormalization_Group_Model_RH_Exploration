@@ -124,7 +124,7 @@ This script will:
 4.  Train the model, computing RMT losses only on contiguous spacings found *within* each cluster.
 5.  Print training progress and final extrapolation.
 
-## 🗂️ Code Structure
+## Code Structure
 
 ```
 .
@@ -137,10 +137,10 @@ This script will:
 └── requirements.txt    # pip requirements
 ```
 
-## 🧠 Future Research Directions
-
-This framework is the foundation for several next steps:
+## Next Steps:
 
 * **Scaling $N$:** Use the `main_minibatch.py` framework to train on $ N=10^5, 10^6, \dots $ to check for emergent statistical anomalies at extreme heights.
 * **Full Adelic Graph:** Enhance the `create_sparse_adelic_graph` function to model the full adelic space $ \mathbb{A}_{\mathbb{Q}} $ more faithfully, perhaps by incorporating the "archimedean" component $ \mathbb{R} $ or more complex $ p $-adic topologies.
 * **Hamiltonian Simulation:** The GUE-MMD loss is our "compute version" of a Hamiltonian simulation. The next step is to replace this statistical prior with a true quantum algorithm (e.g., VQE, QPE) on a quantum computer to find the spectrum of a candidate Hilbert-Pólya operator.
+
+93E3 BEBC C164 D766
