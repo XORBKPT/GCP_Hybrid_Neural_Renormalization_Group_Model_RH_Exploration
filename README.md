@@ -1,421 +1,147 @@
-Given the goal, **the mini-batch hyperscalability team (Team 2) is significantly more likely to produce the breakthrough** needed for a sub-exponential complexity prediction.
+# Hybrid Neural Renormalization Group Model for RH Verification
 
-This is an exciting research setup, and having two teams test these different scaling architectures is a fantastic way to parallelize the work.
+This repository contains the research framework and code for a hybrid machine learning model aimed at verifying the Riemann Hypothesis (RH) at high heights.
 
-Here is a detailed breakdown of the differences between the two codebases and a specific set of recommendations for deploying this on GCP, tailored to your budget and goals.
+The model operationalizes a novel dynamical framework by merging Renormalization Group (RG) flows with Graph Neural Networks (GNNs). The GNN models the "Primal Manifold," a profinite space encoding primes as topological defects, while physics-informed losses enforce theoretical priors from Random Matrix Theory (RMT) and QFT scale-invariance.
 
------
+This work is intended for post-doctoral researchers in number theory and quantum field theory.
 
-## (a) 🔬 Full-Batch vs. Mini-Batch: A Comparison for Your Teams
+## Overview
 
-Here is the high-level summary for your two research groups. The choice between them is a classic **scale-up vs. scale-out** problem, with a critical research-level trade-off.
+The core hypothesis is that the zeros of the Riemann zeta function ($ \rho_n $) can be predicted by a GNN learning the RG flow dynamics on a graph representing the Primal Manifold. The model's key components are:
 
-| Feature | `main_fullbatch.py` (Team 1) | `main_minibatch.py` (Team 2) |
+1.  **Primal Manifold Graph:** A sparse graph where nodes are the ordinal indices $ n $ of the zeros. Edges connect $ (n, n+1) $ (for ordinal flow) and $ (i, j) $ where $ i \equiv j \pmod p $ for a set of small primes $ p $. This $ p $-adic / idelic connection structure mimics the profinite geometry.
+2.  **Hybrid GNN-MLP:** A GNN (using `GCNConv` layers) processes the graph structure, while an MLP backbone processes the node features ($ \log(n) $).
+3.  **Physics-Informed Losses:**
+    * **MSE:** Standard regression loss for positional accuracy ($ \text{Im}(\rho_n) $).
+    * **RMT (GUE) Prior:** We enforce the Montgomery Conjecture by matching the statistics of the *predicted unfolded spacings* to the Gaussian Unitary Ensemble (GUE). This is done via two complementary losses:
+        * **GUE-NLL:** A Negative Log-Likelihood loss against the GUE PDF (Wigner Surmise).
+        * **GUE-MMD:** A Maximum Mean Discrepancy loss, which compares the *distribution* of predicted spacings to a "simulated Hamiltonian" (samples from the GUE PDF).
+    * **RG-Flow Penalty:** (Full-batch only) A loss term that enforces scale invariance ($ \beta=0 $), a key property of the RG fixed point at the critical line.
+
+## Scalability Framework
+
+The primary bottleneck in this research is scaling $ N $ (the number of zeros). We provide two distinct frameworks for this, allowing you to choose based on your available compute resources.
+
+| File | `main_fullbatch.py` | `main_minibatch.py` |
 | :--- | :--- | :--- |
-| **Core Strategy** | **Full-Graph (Scale-Up)** | **Graph Partitioning (Scale-Out)** |
-| **How it works** | Loads the *entire* $N \times N$ graph into GPU VRAM for *one* massive computation per epoch. | Uses `Cluster-GCN` to partition the graph into $k$ subgraphs. Loads *one subgraph* at a time into VRAM. |
-| **Memory (VRAM)** | **Extremely High.** $O(N \cdot |\text{features}| + |\text{edges}|)$. VRAM is the hard bottleneck. | **Extremely Low.** Depends on cluster size ($N/k$), not $N$. |
-| **Scalability** | **Limited.** Hits a hard VRAM wall. $N=10k$ is fine. $N=50k$ might work, $N=100k$ is unlikely. | **Near-Infinite.** Can scale to $N = 10^9+$ by simply increasing $k$ (the number of partitions). |
-| **Dependencies** | Self-contained (PyTorch, SciPy). | **Requires PyTorch Geometric (PyG)** and its sparse dependencies. |
-| **Training** | **Stable & Deterministic.** The gradient is computed from the *entire* dataset at once. | **Stochastic & Fast.** Each epoch is fast, but gradients are "noisier," as they come from subgraphs. |
-| **Loss Function** | **Complete.** Can compute all four losses: MSE, GUE-NLL, GUE-MMD, and the **global `rg_penalty`**. | **Incomplete (by necessity).** |
-| **🚨 Key Trade-Off** | **Pro:** Can compute the global `rg_penalty` loss, which is theoretically important. <br> **Con:** Cannot scale to massive $N$. | **Pro:** Can scale to *any* $N$. <br> **Con:** **Loses the global `rg_penalty` loss.** This is a *research* trade-off. |
+| **Strategy** | **Full-Batch Training** | **Mini-Batch Training (Cluster-GCN)** |
+| **Graph Library** | Manual `torch.sparse.mm` | `torch_geometric` |
+| **Use Case** | $ N \le 50,000 $ on high-memory GCP/AWS instance (e.g., A100 80GB). | $ N \ge 100,000 $ up to $ 10^9+ $. Scales to any size. |
+| **Pros** | Conceptually simpler. Can use the global `rg_penalty` loss. | **Extremely memory efficient.** Can run on a single consumer GPU (e.g., RTX 4090). |
+| **Cons** | Hits a hard memory wall. | More complex data loading. |
+| **Key Trade-off**| 🔴 **Loses the global `rg_penalty`** | ✅ **Keeps structured `RMT` losses** |
 
-### Implications for Your Teams
+### 🚨 The Critical Trade-Off: `rg_penalty`
 
-**Team 1 (Full-Batch):**
+The `rg_penalty` loss from the original research code:
+`rg_penalty = torch.mean((scaled_pred / scale_factor - pred)**2)`
+...requires **two full-graph forward passes** to compute. This is perfectly fine in a full-batch setting.
 
-  * **Mission:** Your mission is to **test theoretical purity**. The `rg_penalty` (scale-invariance) loss is a core part of your original QFT-inspired hypothesis.
-  * **Focus:** You must verify if this loss term is *actually* necessary for convergence and accurate extrapolation.
-  * **Limitation:** You will be limited to $N \approx 10k-50k$ zeros. Your goal is to find the best possible result *within this high-but-limited regime*.
+In a mini-batch setting, this is computationally infeasible and conceptually incompatible. We *cannot* check a *global* scale-invariance property using *only* a small subgraph.
 
-**Team 2 (Mini-Batch):**
+Therefore, `main_minibatch.py` **removes this loss term**. It relies *entirely* on the RMT (NLL and MMD) losses to act as the physics-informed regularizer. This is a necessary research trade-off for scalability. The `main_fullbatch.py` script *retains* this loss, as it uses the "compute version" of the Hamiltonian simulation you requested.
 
-  * **Mission:** Your mission is to **test for hyperscalability**. You are betting that the RMT priors (NLL and MMD) are *sufficient* to enforce the physics, even without the `rg_penalty`.
-  * **Focus:** You must push $N$ as high as possible ($N=100k, 1M, \dots$) to see if new statistical patterns or anomalies emerge at heights no one has ever modeled this way.
-  * **Challenge:** You must ensure the RMT loss, computed on *contiguous blocks within clusters*, is a stable-enough signal.
+---
 
-The project's success hinges on answering this question: **Is the `rg_penalty` essential, or can the RMT priors alone guide the model at $N=1M$?** Team 1 and Team 2 will answer this.
+## 🚀 Setup & Installation
 
------
+We recommend using a `conda` environment.
 
-## (b) ☁️ GCP Recommendations for Scalable Research
+1.  **Clone the repository:**
+    ```bash
+    git clone <your-repo-url>
+    cd <your-repo-name>
+    ```
 
-Given your connection to TUM/Google and your Q4 budget, you are in a perfect position to use Google's best-in-class ML infrastructure. The goal is *not* to save money, but to get **answers as fast as possible**.
+2.  **Create Conda Environment:**
+    ```bash
+    conda create -n neural-rg python=3.10
+    conda activate neural-rg
+    ```
 
-Here is the optimal setup for each team.
+3.  **Install PyTorch:**
+    (Visit [pytorch.org](https://pytorch.org/) for the command specific to your CUDA version.)
+    ```bash
+    # Example for CUDA 12.1
+    conda install pytorch torchvision torchaudio pytorch-cuda=12.1 -c pytorch -c nvidia
+    ```
 
-### General GCP Setup (For Both Teams)
+4.  **Install PyTorch Geometric (PyG):**
+    This is required for the mini-batch framework. PyG's installation is tied to your PyTorch/CUDA version.
+    ```bash
+    # Example for PyTorch 2.1 / CUDA 12.1
+    pip install torch_geometric
+    pip install torch_scatter torch_sparse torch_cluster torch_spline_conv -f [https://data.pyg.org/whl/torch-2.1.0+cu121.html](https://data.pyg.org/whl/torch-2.1.0+cu121.html)
+    ```
 
-1.  **Project & Data:**
+5.  **Install other dependencies:**
+    ```bash
+    pip install numpy networkx mpmath scipy
+    ```
+    (A `requirements.txt` file is also provided).
 
-      * **Service:** Use **Vertex AI**. Do not manually manage VMs (GCE). Vertex AI is Google's managed platform, built for this.
-      * **Data Storage:** Create a **Google Cloud Storage (GCS) Bucket**. Store your `zeta_zeros_10k.txt` (and later, your $1M$ zero file) here. Your training jobs will read directly from this bucket.
-      * **Code Repository:** Use **Artifact Registry** to store your custom Docker container images. This is the professional, reproducible way.
+---
 
-2.  **Environment (Container):**
+## 📈 Running the Models
 
-      * Start with a **Vertex AI Deep Learning Container** image. Choose a PyTorch 1.13+ (or 2.x) image with CUDA 12.
-      * Create a `Dockerfile` that `FROM` this base image and `pip install torch_geometric` (and its sparse dependencies) and any other requirements.
-      * Push this custom container to **Artifact Registry**. Both teams will use this as their training environment.
+### Step 1: Generate the Dataset
 
-3.  **Experiment Tracking (Crucial):**
+You only need to do this once. The script will generate the first 10,000 (or more) zeros and save them to `zeta_zeros_10k.txt`.
 
-      * Use **Vertex AI Experiments**. Your models have many (hyper)parameters (loss weights, $N$, primes). You *must* log every run.
-      * Your Python script can use the Google Cloud AI Platform SDK to log metrics (e.g., `val_loss`, `extrapolation_error`, `gue_nll`) for each epoch. This creates a leaderboard of all your experiments, which is essential for your post-docs.
-
------
-
-### Optimal Setup for Team 1: `main_fullbatch.py` (The "Beast")
-
-  * **Problem:** This job is **VRAM-bound**. It needs to fit the *entire* graph, features, and intermediate activations for one $N=10k$ (or $N=50k$) graph into a single GPU.
-  * **GCP Service:** **Vertex AI Training** (Custom Job) or **Vertex AI Workbench** (for interactive-but-powerful notebook sessions).
-  * **Recommended Machine:** **Accelerator-Optimized (A3 or A2)**.
-      * **Primary Choice:** `a2-ultragpu-1g`
-          * **GPU:** 1x **NVIDIA A100 80GB**
-          * **CPU/RAM:** 12 vCPUs, 136GB RAM
-      * **Why:** The **80GB of HBM2e VRAM** is the *only* thing that matters. This machine is designed for massive, single-graph models (like large-language models or, in your case, a massive GNN). This is the "scale-up" solution. Your $50k budget is *exactly* for this class of machine.
-      * **Pros:**
-          * Fastest possible path to an answer for $N \le 50k$.
-          * Allows you to test the *true* full-batch model with the `rg_penalty`.
-      * **Cons:**
-          * Expensive (but you have the budget).
-          * Will *never* scale to $N=1M$. It will fail with an "Out-of-Memory" (OOM) error, and your research will stop.
-
------
-
-### Optimal Setup for Team 2: `main_minibatch.py` (The "Swarm")
-
-  * **Problem:** This job is **throughput-bound**. It runs *many* small, fast computations (one per cluster). The GPU doesn't need to be huge; it needs to be *fast* at small-to-medium matrix multiplications.
-  * **GCP Service:** **Vertex AI Training** (Custom Job).
-  * **Recommended Machine:** **General-Purpose (G2)**.
-      * **Primary Choice:** `g2-standard-8`
-          * **GPU:** 1x **NVIDIA L4** (24GB VRAM)
-          * **CPU/RAM:** 8 vCPUs, 32GB RAM
-      * **Why:** An A100 80GB would be *wasted* and *bored*. Each mini-batch (e.g., 200 nodes) is tiny and won't saturate its massive tensor cores. The **L4** is a modern, highly-efficient GPU perfect for this kind of "inference-like" training workload. It will iterate through the batches *very* quickly. The 24GB VRAM is more than enough to hold any single cluster.
-      * **Pros:**
-          * *Infinitely scalable* in your model (just generate more zeros and more clusters).
-          * *Much* cheaper per hour, letting you run more experiments.
-      * **Cons:**
-          * Loses the `rg_penalty` loss, which is a significant research compromise.
-          * The *one-time* graph partitioning by `ClusterData` (for $N=1M$) might take a while, but it only has to be done once.
-
-I am excited to see what this dual-pronged approach yields. This is a very strong and well-structured research plan.
-
-Would you like to discuss the specifics of adapting the data generation (`generate_and_save_zeros`) to run as a high-throughput parallel job on GCP for scaling to 10 million or 100 million zeros?
-
-## Team 2 (Hyperscalability)
-
-By sacrificing the `rg_penalty`, they gain the ability to scale.
-
-* *RH Emergent Properties at Scale:* The RH is about *all* zeros ($N \to \infty$). Any emergent property that allows for a sub-exponential prediction (e.g., a hidden fractal structure, a new scaling law) is almost certainly an **emergent property** that is *only* visible at massive $N$.
-
-* An experiment at $N=10k$ or $N=50k$ is, in the context of infinity, like looking at a tiny speck. Team 1 will be is blind to any emergent, high-$N$ phenomena.
-* Team 2 gets a JWST "lens" powerful enough to see them, if they are there.
-
-* Riemann and QFT.
-    * *Team 1* is testing a *top-down, human-imposed hypothesis*: "We, believe a QFT-like `rg_penalty` *must* be part of the RH mechanism. Let's force the GNN to learn it."
-    * A confirmatory, but rigid belief; approach. What if this assumption is wrong?
-      
-    * *Team 2* is running a *bottom-up, discovery-driven experiment*: "We *assume nothing* about the *mechanism*, only the *statistical signature* (the RMT priors)." so we free up the GNN.
-    * It doesn't have to waste capacity learning an artificial `rg_penalty` loss.
-    * It is free to find *any* internal representation or mechanism—even one we have no name for—as long as its output *statistically matches* the quantum chaos of the GUE.
-
-RMT priors (NLL/MMD) *are* a fundamental constraint. They model the "what" (the quantum chaos signature) without being prescriptive about the "how" (the `rg_penalty`). 
-Team 2's GNN, fed with 100 million data points, is more likely to discover the *true* mechanism (than Team 1's GNN; being forced to learn *our* best *guess* at the mechanism, on a wee dataset.
-
-## 2. BUT the crucial Role of Team 1 is theoretical purity.
-
-Team 1's work is a **critical control experiment** that de-risks the hunt. Team 1's mission is *not* to find "the final answer" but **validate the sacrifice that Team 2 must make.**
-
-Path of A/B testing:
-
-1.  **Initial Race ($N=10k$):** Both teams run their models on the 10k zero dataset.
-2.  **Key Question:** Does Team 1's model (with the `rg_penalty`) *significantly* outperform Team 2's model (without it) on extrapolation and statistical accuracy *at this small scale*?
-3.  **Two Outcomes:**
-    * **Scenario A (Ideal):** Both models perform *similarly well*. It means the `rg_penalty` offers no significant value / redundant.
-    * We now have the full justification to drop it and put all resources into Team 2, losing nothing.
-      
-    * **Scenario B (Problematic):** Team 1's model works, but Team 2's model (without the `rg_penalty`) fails completely.
-    * This means the RMT priors *alone* are not a strong-enough signal at small $N$.
-    * The project must then find a *scalable* version of the `rg_penalty` or a new, better loss.
-
-So, Team 1 (Full-Batch on A100) is your **Validation & De-risking** group.
-Team 2 (Mini-Batch on L4) is your **Discovery & Scaling** group.
-
-Breakthroughs will come from Team 2, but they can only proceed *after* Team 1 gives them the green light.
-
------
-
-## GCP Parallel Data Generation Architecture:
-
-The classic "map-reduce" pattern; *map* the work across thousands of small CPUs and then *reduce* the results into one file.
-
-1.  **Controller (Laptop):** A simple Python script that *dispatches* the work. It generates 100,000 "work items" (e.g., "compute zeros 1-1000", "compute 1001-2000", ...) and submits them to GCP Batch.
-   
-2.  **GCS Bucket (Data Storage):** A central bucket will store two things:
-      * `/parts/`: A folder to receive the 100,000+ small text files from the workers.
-      * `/final/`: The destination for the final, aggregated `zeta_zeros_100M.txt` file.
-        
-3.  **Worker (`worker.py` + Docker):** This is the heart of the operation. It's a simple Python script, based on your `mpmath` code, that is containerized with Docker. It's designed to:
-      * Wake up.
-      * Read its assigned task (e.g., `START_N=1001`, `END_N=2000`).
-      * Compute *only* those 1,000 zeros.
-      * Write them to a *unique* file (e.g., `zeros_0000001001.txt`).
-      * Upload that file to the GCS `/parts/` folder.
-      * Shut down.
-        
-5.  **GCP Batch ("Conductor"):** Fully-managed, does the orchestration. We tell it "run 100,000 copies of my 'Worker' container" and it handles provisioning the VMs, running the jobs, retrying failures, and scaling down.
-   
-6.  **Aggregator (`aggregator.py`):** Final, single job that runs *after* all workers are done. Lists all 100,000+ files in `/parts/`, downloads and concatenates them *in the correct numerical order*, and streams the final 100M-line file back to `/final/zeta_zeros_100M.txt`.
-
------
-
-## 1\. Worker (`worker.py`)
-
-Parameterized using environment variables:
-
-```python
-# worker.py
-import os
-import sys
-import mpmath
-from google.cloud import storage
-
-print("--- Starting Zeta Zero Worker ---")
-
-# 1. Get job parameters from environment variables
-try:
-    START_N = int(os.environ['START_N'])
-    END_N = int(os.environ['END_N'])
-    BUCKET_NAME = os.environ['BUCKET_NAME']
-    
-    # Format: "parts/zeros_0000001001.txt" (padded for correct sorting)
-    FILE_NAME = f"parts/zeros_{START_N:012d}.txt"
-    LOCAL_TMP_FILE = "/tmp/zeros.txt"
-
-except KeyError as e:
-    print(f"Error: Missing environment variable: {e}")
-    sys.exit(1)
-
-print(f"Task: Compute zeros {START_N} to {END_N}")
-print(f"Output: gs://{BUCKET_NAME}/{FILE_NAME}")
-
-# 2. Set mpmath precision
-mpmath.mp.dps = 30
-
-# 3. Compute the assigned range of zeros
-try:
-    with open(LOCAL_TMP_FILE, 'w') as f:
-        for n in range(START_N, END_N + 1):
-            # Write one zero (as a float string) per line
-            z = float(mpmath.im(mpmath.zetazero(n)))
-            f.write(f"{z}\n")
-            if n % 500 == 0:
-                print(f"  ... computed zero {n}")
-
-    print(f"Computation complete. Zeros {START_N}-{END_N} written to {LOCAL_TMP_FILE}")
-
-except Exception as e:
-    print(f"Error during mpmath computation: {e}")
-    sys.exit(1)
-
-# 4. Upload the result file to GCS
-try:
-    storage_client = storage.Client()
-    bucket = storage_client.bucket(BUCKET_NAME)
-    blob = bucket.blob(FILE_NAME)
-    
-    blob.upload_from_filename(LOCAL_TMP_FILE)
-    
-    print(f"Successfully uploaded result to gs://{BUCKET_NAME}/{FILE_NAME}")
-
-except Exception as e:
-    print(f"Error uploading to GCS: {e}")
-    sys.exit(1)
-
-print("--- Zeta Zero Worker Finished ---")
-```
-
-## 2\. Worker Environment (`Dockerfile`)
-
-Packages `worker.py` and its dependencies (`mpmath`, `google-cloud-storage`).
-
-```dockerfile
-# Dockerfile
-FROM python:3.10-slim
-
-# Install dependencies
-RUN pip install --no-cache-dir mpmath google-cloud-storage
-
-# Copy the worker script into the container
-WORKDIR /app
-COPY worker.py .
-
-# Set the entrypoint
-ENTRYPOINT ["python", "worker.py"]
-```
-
-**build and push this (one-time setup):**
+We use the `main_fullbatch.py` script for this, as it contains the generation helper.
 
 ```bash
-# Enable the services
-gcloud services enable batch.googleapis.com
-gcloud services enable artifactregistry.googleapis.com
+# Generate the first 10,000 zeros
+python main_fullbatch.py --generate_zeros=10000
+```
+*Note: Generating 10k zeros can take several minutes. Generating 100k+ can take hours.*
 
-# Create a Docker repository in Artifact Registry
-gcloud artifacts repositories create zeta-workers \
-    --repository-format=docker \
-    --location=europe-west4 # (Use a region near TUM/Munich)
+### Step 2 (Option A): Run the Full-Batch Model
 
-# Build the container
-docker build -t zeta-worker .
+This is the baseline, good for $ N=10,000 $ on a system with a powerful GPU (e.g., > 32GB VRAM).
 
-# Tag it for Artifact Registry
-# Make sure to replace <YOUR-GCP-PROJECT-ID>
-docker tag zeta-worker europe-west4-docker.pkg.dev/<YOUR-GCP-PROJECT-ID>/zeta-workers/zeta-worker:1.0
+```bash
+python main_fullbatch.py
+```
+This script will:
+1.  Load all 10,000 zeros.
+2.  Build the full $ 10000 \times 10000 $ sparse adjacency matrix in memory.
+3.  Perform full-batch gradient descent.
+4.  Print training progress and final extrapolation.
 
-# Push it
-gcloud auth configure-docker europe-west4-docker.pkg.dev
-docker push europe-west4-docker.pkg.dev/<YOUR-GCP-PROJECT-ID>/zeta-workers/zeta-worker:1.0
+### Step 2 (Option B): Run the Mini-Batch Model
+
+This is the scalable framework, recommended for $ N \ge 10,000 $ or for systems with limited VRAM.
+
+```bash
+python main_minibatch.py
+```
+This script will:
+1.  Load all 10,000 zeros.
+2.  Build the graph and partition it into 100 clusters (subgraphs), saving them to a new `clusters/` directory. (Only on the first run).
+3.  Iterate through the *clusters* (1 cluster = 1 mini-batch).
+4.  Train the model, computing RMT losses only on contiguous spacings found *within* each cluster.
+5.  Print training progress and final extrapolation.
+
+## 🗂️ Code Structure
+
+```
+.
+├── main_fullbatch.py   # Full-batch model (Baseline, N<=50k)
+├── main_minibatch.py   # Mini-batch model (Scalable, N~1M+)
+├── README.md           # This file
+|
+├── zeta_zeros_10k.txt  # Data file (generated)
+└── clusters/           # Directory for PyG clusters (generated)
 ```
 
------
+## 🧠 Future Research Directions
 
-## 3\. Controller (`controller.py`)
+This framework is the foundation for several next steps:
 
-Run on your local machine, it generates all the jobs and submits them to GCP Batch.
+* **Scaling $N$:** Use the `main_minibatch.py` framework to train on $ N=10^5, 10^6, \dots $ to check for emergent statistical anomalies at extreme heights.
+* **Full Adelic Graph:** Enhance the `create_sparse_adelic_graph` function to model the full adelic space $ \mathbb{A}_{\mathbb{Q}} $ more faithfully, perhaps by incorporating the "archimedean" component $ \mathbb{R} $ or more complex $ p $-adic topologies.
+* **Hamiltonian Simulation:** The GUE-MMD loss is our "compute version" of a Hamiltonian simulation. The next step is to replace this statistical prior with a true quantum algorithm (e.g., VQE, QPE) on a quantum computer to find the spectrum of a candidate Hilbert-Pólya operator.
 
-```python
-# controller.py
-import os
-import sys
 
-# --- CONFIGURATION ---
-TOTAL_ZEROS = 10_000_000  # <--- Target: 10 million (or 100M)
-CHUNK_SIZE = 1_000        # <--- How many zeros per job
-PROJECT_ID = "<YOUR-GCP-PROJECT-ID>"
-REGION = "europe-west4"
-BUCKET_NAME = "<YOUR-GCS-BUCKET-NAME>" # e.g., "tum-rh-data"
-WORKER_IMAGE = f"{REGION}-docker.pkg.dev/{PROJECT_ID}/zeta-workers/zeta-worker:1.0"
-# Service account for the Batch jobs to run as
-# Needs "Storage Object Admin" role on the bucket
-SERVICE_ACCOUNT = f"<YOUR-SERVICE-ACCOUNT-EMAIL>" 
-
-def submit_batch_job(start_n, end_n):
-    """Submits a single GCP Batch job."""
-    
-    job_name = f"zeta-gen-{start_n}"
-    
-    # This is the gcloud CLI command
-    command = f"""
-    gcloud batch jobs submit {job_name} \
-        --project={PROJECT_ID} \
-        --location={REGION} \
-        --task-spec='{{
-            "runnables": [
-                {{
-                    "container": {{
-                        "imageUri": "{WORKER_IMAGE}",
-                        "entrypoint": "python",
-                        "commands": ["worker.py"]
-                    }}
-                }}
-            ],
-            "environment": {{
-                "variables": {{
-                    "START_N": "{start_n}",
-                    "END_N": "{end_n}",
-                    "BUCKET_NAME": "{BUCKET_NAME}"
-                }}
-            }},
-            "computeResource": {{
-                "cpuMilli": 1000,
-                "memoryMib": 2048
-            }}
-        }}' \
-        --service-account="{SERVICE_ACCOUNT}" \
-        --no-sync
-    """
-    
-    print(f"Submitting job for range {start_n}-{end_n}...")
-    # We use os.system for simplicity
-    # For production, use the Python client library
-    os.system(command)
-
-# --- Main execution ---
-if __name__ == "__main__":
-    if "YOUR-GCP-PROJECT-ID" in PROJECT_ID:
-        print("Error: Please configure PROJECT_ID and other variables.")
-        sys.exit(1)
-
-    num_jobs = (TOTAL_ZEROS + CHUNK_SIZE - 1) // CHUNK_SIZE
-    print(f"--- Zeta Zero Job Dispatcher ---")
-    print(f"Total Zeros: {TOTAL_ZEROS}")
-    print(f"Chunk Size:  {CHUNK_SIZE}")
-    print(f"Total Jobs:  {num_jobs}")
-    
-    if input("Proceed to submit? (y/n): ").lower() != 'y':
-        print("Aborting.")
-        sys.exit(0)
-
-    for i in range(num_jobs):
-        start_n = i * CHUNK_SIZE + 1
-        end_n = min((i + 1) * CHUNK_SIZE, TOTAL_ZEROS)
-        
-        submit_batch_job(start_n, end_n)
-        
-    print(f"All {num_jobs} jobs submitted to GCP Batch.")
-```
-
------
-
-## 4\. Aggregator (`aggregator.py`)
-
-After GCP Batch shows all jobs are complete, run this *once* (from a Vertex AI Workbench notebook).
-
-```python
-# aggregator.py
-from google.cloud import storage
-import io
-
-# --- CONFIGURATION ---
-BUCKET_NAME = "<YOUR-GCS-BUCKET-NAME>"
-SOURCE_PREFIX = "parts/"
-DESTINATION_BLOB = "final/zeta_zeros_100M.txt"
-
-print("--- Starting Zeta Zero Aggregator ---")
-storage_client = storage.Client()
-bucket = storage_client.bucket(BUCKET_NAME)
-
-# 1. List all parts. The padding in the name is critical.
-all_parts = list(bucket.list_blobs(prefix=SOURCE_PREFIX))
-
-# Filter out any non-data files and sort them lexicographically
-# (e.g., "zeros_0000000001.txt", "zeros_0000001001.txt", ...)
-data_parts = [blob for blob in all_parts if blob.name.endswith('.txt')]
-data_parts.sort(key=lambda b: b.name)
-
-print(f"Found {len(data_parts)} parts to aggregate.")
-
-# 2. Get the destination blob
-final_blob = bucket.blob(DESTINATION_BLOB)
-
-# 3. Stream-compose the final file
-# This avoids downloading 100M lines to a local disk.
-# We download, write to in-memory buffer, and upload in chunks.
-print(f"Composing final file at gs://{BUCKET_NAME}/{DESTINATION_BLOB}...")
-
-with final_blob.open("w") as final_file:
-    for i, blob in enumerate(data_parts):
-        if i % 100 == 0:
-            print(f"  ... processing part {i}/{len(data_parts)} ({blob.name})")
-        
-        # Download part content as string and write to the final blob
-        content = blob.download_as_text()
-        final_file.write(content)
-
-print(f"Aggregation complete. Final file created.")
-```
-
-This architecture provides you with a robust, scalable, and extremely fast method for generating your training data, reserving your main budget for the A100/L4 machines needed for the GNN training.
