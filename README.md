@@ -38,11 +38,11 @@ The primary bottleneck in this research is scaling N (the number of zeros).
 
 ### Trade-Off: `rg_penalty`
 
-The `rg_penalty` loss from the original research code:
+The `rg_penalty` loss from main_fullbatch code:
 `rg_penalty = torch.mean((scaled_pred / scale_factor - pred)**2)`
-...requires **two full-graph forward passes** to compute. Fine in full-batch.
+needs *two full-graph forward passes* to compute; all good in full-batch.
 
-In mini-batch, this is computationally infeasible. We *cannot* check a *global* scale-invariance property using a small subgraph.
+In the mini-batch, its computationally infeasible. We *cannot* check a *global* scale-invariance property using a small subgraph.
 
 So, `main_minibatch.py` **removes this loss term**. It relies totally on the RMT (NLL and MMD) losses to act as the physics-informed regularizer. This is a necessary research trade-off for scalability. The `main_fullbatch.py` script *retains* this loss, as it uses the "compute version" of the Hamiltonian simulation (compute, non-QC, included)
 
