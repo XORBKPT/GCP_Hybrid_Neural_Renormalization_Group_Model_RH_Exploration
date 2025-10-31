@@ -11,7 +11,7 @@ Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
 | **Core** | **Full-Graph (Scale-Up)** | **Graph Partitioning (Scale-Out)** |
 | **How to do it** | Loads the *entire* $N \times N$ graph into GPU VRAM for *one* massive computation per epoch. | Uses `Cluster-GCN` to partition the graph into $k$ subgraphs. Loads *one subgraph* at a time into VRAM. |
 | **Memory (VRAM)** | **Extremely High.** $O(N \cdot |\text{features}| + |\text{edges}|)$. VRAM is the hard bottleneck. | **Extremely Low.** Depends on cluster size ($N/k$), not $N$. |
-| **Scalability** | **Limited.** Hits a hard VRAM wall. $N=10k$ is fine. $N=50k$ might work, $N=100k$ is unlikely. | **Near-Infinite.** Can scale to $N = 10^9+$ by simply increasing $k$ (the number of partitions). |
+| **Scalability** | **Limited.** Hits a hard VRAM wall. $N=10k$ is fine. N=50k might work, N=100k is unlikely. | **Near-Infinite.** Can scale to $N = 10^9+$ by simply increasing $k$ (the number of partitions). |
 | **Dependencies** | Self-contained (PyTorch, SciPy). | **Requires PyTorch Geometric (PyG)** and its sparse dependencies. |
 | **Training** | **Stable & Deterministic.** The gradient is computed from the *entire* dataset at once. | **Stochastic & Fast.** Each epoch is fast, but gradients are "noisier," as they come from subgraphs. |
 | **Loss Function** | **Complete.** Can compute all four losses: MSE, GUE-NLL, GUE-MMD, and the **global `rg_penalty`**. | **Incomplete (by necessity).** |
