@@ -1,6 +1,4 @@
-This is an exciting research setup, and having two teams test these different scaling architectures is a fantastic way to parallelize the work.
-
-Here is a detailed breakdown of the differences between the two codebases and a specific set of recommendations for deploying this on GCP, tailored to your budget and goals.
+# Differences between the two codebases and recommendations for deploying this on GCP.
 
 -----
 
