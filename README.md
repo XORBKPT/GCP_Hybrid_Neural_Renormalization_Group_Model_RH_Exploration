@@ -1,4 +1,4 @@
-# Hybrid Neural Renormalization Group Model for RH Verification
+# GCP Hybrid Neural Renormalization Model for the RH
 
 The RH is a statement about infinity. Any true mechanism allowing for sub-exponential prediction is likely an emergent property that *only* manifests at massive scale. Team 2's GNN, fed with 100M+ data points and constrained only by the *statistical signature* of quantum chaos (the RMT priors), is free to discover a "true" internal mechanism that we (as human researchers), may not even have the language for yet.
 
