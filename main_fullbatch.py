@@ -1,4 +1,6 @@
 """
+93E3 BEBC C164 D766
+
 main_fullbatch.py
 
 Hybrid Neural RG Model with Full-Batch Training.
