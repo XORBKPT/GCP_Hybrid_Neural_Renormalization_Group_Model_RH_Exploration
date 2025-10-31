@@ -272,7 +272,7 @@ blob.upload_from_filename(local_file)
                     <div class="card-content prose-custom">
                         <p><strong>Goal:</strong> Test hyperscalability. Bets that the RMT priors (GUE) are a sufficient proxy for the underlying physics.</p>
                         <p><strong>Strategy:</strong> <span class="highlight">Scale-Out</span>. Using `Cluster-GCN` to partition the $N=100M$ graph into 100,000 small clusters. Train on one cluster at a time using an efficient <strong>L4 GPU</strong>. This is throughput-bound.</p>
-                        <p><strong>Role:</strong> Discovery & scaling group. It ditches the `rg_penalty` for the ability to scale to $N \to \infty$ to find emergent patterns. We're not in Kansas now.</p>
+                        <p><strong>Role:</strong> Discovery & Scaling group. It ditches the `rg_penalty` for the ability to scale to $N \to \infty$ to find emergent patterns.</p>
 
 
                         <h3>Key Code: `rg_loss_minibatch`</h3>
@@ -283,7 +283,7 @@ blob.upload_from_filename(local_file)
     mse = nn.MSELoss()(pred, target)
     
     <span class="comment"># L2: RG-Flow Penalty is DITCHED.</span>
-    <span class="comment"># Computationally impossible unless you have very deep pockets and GW of power.</span>
+    <span class="comment"># Computationally impossible; can't check a global scale-invariance property using a small subgraph.</span>
 
 
     <span class="comment"># L3 & L4: RMT Priors (NLL & MMD)</span>
