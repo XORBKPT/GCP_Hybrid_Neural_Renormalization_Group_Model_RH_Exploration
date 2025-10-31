@@ -1,8 +1,7 @@
-Deploying on GCP.
 
 -----
 
-## Full-Batch vs. Mini-Batch:
+## Full-Batch vs. Mini-Batch Deploying on GCP:
 
 Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
 
