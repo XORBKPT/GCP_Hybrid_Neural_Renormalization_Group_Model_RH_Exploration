@@ -4,20 +4,20 @@
 
 ## (a) 🔬 Full-Batch vs. Mini-Batch: A Comparison for Your Teams
 
-Here is the high-level summary for your two research groups. The choice between them is a classic **scale-up vs. scale-out** problem, with a critical research-level trade-off.
+The choice is **scale-up vs. scale-out** exploration with A/B testing.
 
 | Feature | `main_fullbatch.py` (Team 1) | `main_minibatch.py` (Team 2) |
 | :--- | :--- | :--- |
-| **Core Strategy** | **Full-Graph (Scale-Up)** | **Graph Partitioning (Scale-Out)** |
-| **How it works** | Loads the *entire* $N \times N$ graph into GPU VRAM for *one* massive computation per epoch. | Uses `Cluster-GCN` to partition the graph into $k$ subgraphs. Loads *one subgraph* at a time into VRAM. |
+| **Core** | **Full-Graph (Scale-Up)** | **Graph Partitioning (Scale-Out)** |
+| **How to do it** | Loads the *entire* $N \times N$ graph into GPU VRAM for *one* massive computation per epoch. | Uses `Cluster-GCN` to partition the graph into $k$ subgraphs. Loads *one subgraph* at a time into VRAM. |
 | **Memory (VRAM)** | **Extremely High.** $O(N \cdot |\text{features}| + |\text{edges}|)$. VRAM is the hard bottleneck. | **Extremely Low.** Depends on cluster size ($N/k$), not $N$. |
 | **Scalability** | **Limited.** Hits a hard VRAM wall. $N=10k$ is fine. $N=50k$ might work, $N=100k$ is unlikely. | **Near-Infinite.** Can scale to $N = 10^9+$ by simply increasing $k$ (the number of partitions). |
 | **Dependencies** | Self-contained (PyTorch, SciPy). | **Requires PyTorch Geometric (PyG)** and its sparse dependencies. |
 | **Training** | **Stable & Deterministic.** The gradient is computed from the *entire* dataset at once. | **Stochastic & Fast.** Each epoch is fast, but gradients are "noisier," as they come from subgraphs. |
 | **Loss Function** | **Complete.** Can compute all four losses: MSE, GUE-NLL, GUE-MMD, and the **global `rg_penalty`**. | **Incomplete (by necessity).** |
-| **🚨 Key Trade-Off** | **Pro:** Can compute the global `rg_penalty` loss, which is theoretically important. <br> **Con:** Cannot scale to massive $N$. | **Pro:** Can scale to *any* $N$. <br> **Con:** **Loses the global `rg_penalty` loss.** This is a *research* trade-off. |
+| **Key Trade-Off** | **Pro:** Can compute the global `rg_penalty` loss, which is theoretically important. <br> **Con:** Cannot scale to massive $N$. | **Pro:** Can scale to *any* $N$. <br> **Con:** **Loses the global `rg_penalty` loss.** This is a *research* trade-off. |
 
-### Implications for Your Teams
+### Implications for Your Both Teams
 
 **Team 1 (Full-Batch):**
 
@@ -95,7 +95,3 @@ Here is the optimal setup for each team.
       * **Cons:**
           * Loses the `rg_penalty` loss, which is a significant research compromise.
           * The *one-time* graph partitioning by `ClusterData` (for $N=1M$) might take a while, but it only has to be done once.
-
-I am excited to see what this dual-pronged approach yields. This is a very strong and well-structured research plan.
-
-Would you like to discuss the specifics of adapting the data generation (`generate_and_save_zeros`) to run as a high-throughput parallel job on GCP for scaling to 10 million or 100 million zeros?
