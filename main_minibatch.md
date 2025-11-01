@@ -3,7 +3,7 @@
 The challenge in mini-batching is **preserving the loss structure**.
 
   * `MSE` loss is fine; it's node-wise.
-  * `RG` penalty is a *global* property of the model (comparing two full-graph forward passes). No good with mini-batching. Its not simple "data fitting".
+  * `RG` penalty is a *global* property of the model (comparing two full-graph forward passes). No good with mini-batching.
   * `GUE` (NLL/MMD) losses are *structured*; they depend on **contiguous spacings** between adjacent zeros (`pred[i+1] - pred[i]`).
 
 A standard `NeighborLoader` (like for GraphSAGE) *will not work* (it samples random neighbors, breaking ordinal structure). So, we partition the graph into **contiguous-ish subgraphs**.
