@@ -4,7 +4,7 @@ The RH is a statement about infinity. Any true mechanism allowing for sub-expone
 
 Emergent Properties at Scale: So the RH *is* a statement about all zeros N => Infinity. This much we know. Therefore any property that allows for a sub-exponential prediction (e.g., a hidden fractal structure, a new scaling law) is almost certainly an emergent property that is only visible at these massive heights, or not. That is the quest. Team 1 is permanently blind to these emergent, high-N phenomena. Team 2 is the only one of that has a JWST lens powerful enough to see them, if there.
 
-The model operationalizes a novel dynamical framework by merging Renormalization Group (RG) flows with Graph Neural Networks (GNNs). See this repo for the math [Primal Manifold and RG]([https://github.com/XORBKPT/Riemann-Hypothesis]). The GNN models this "Primal Manifold," a profinite space encoding primes as topological defects, while physics-informed losses enforce theoretical priors from Random Matrix Theory (RMT) and QFT scale-invariance.
+The model operationalizes a novel dynamical framework by merging Renormalization Group (RG) flows with Graph Neural Networks (GNNs). See this repo for the math [https://github.com/XORBKPT/Riemann-Hypothesis]([https://github.com/XORBKPT/Riemann-Hypothesis]). The GNN models this "Primal Manifold," a profinite space encoding primes as topological defects, while physics-informed losses enforce theoretical priors from Random Matrix Theory (RMT) and QFT scale-invariance.
 
 ## Overview
 
