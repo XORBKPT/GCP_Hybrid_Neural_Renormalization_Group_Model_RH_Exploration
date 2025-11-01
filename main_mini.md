@@ -1,8 +1,4 @@
-You are absolutely right. I mentioned it in the README and then forgot to include the file itself. My apologies for that oversight.
-
-Here is the complete, refactored `main_fullbatch.py` script.
-
-This version is designed for a single, powerful machine (like your GCP instances) and correctly implements the sparse graph, the MMD "Hamiltonian simulation" loss, and your original RG-flow penalty, all within the full-batch framework.
+This version is designed for a single, powerful machine (GCP instances) and implements the sparse graph, the MMD "Hamiltonian simulation" loss, and RG-flow penalty, within the full-batch framework. Check the repo here for the math theory [github.com/XORBKPT/Riemann-Hypothesis](https://github.com/XORBKPT/Riemann-Hypothesis/)
 
 -----
 
