@@ -394,4 +394,5 @@ if __name__ == '__main__':
              
         main()
 ```
+Note: We are trying number theory and fundamental physics rather than "just data fitting".
 93E3 BEBC C164 D766
