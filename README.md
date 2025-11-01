@@ -1,14 +1,14 @@
-**This repository contains the research framework and code for a hybrid machine learning model aimed at verifying the Riemann Hypothesis at high heights.**
+**This repository contains the research code for a hybrid machine learning model aimed at verifying the Riemann Hypothesis at high heights.**
 
-The RH is a statement about infinity. Any true mechanism allowing for sub-exponential prediction is likely an emergent property that *only* manifests at massive scale. Team 2's GNN, fed with 100M+ data points and constrained only by the *statistical signature* of quantum chaos (the RMT priors), is free to discover a "true" internal mechanism that we (as human researchers), may not even have the language for yet.
+The RH is a statement about infinity. Any true mechanism allowing for sub-exponential prediction is likely an emergent property that *only* manifests at massive scale. Team 2's GNN, fed with 100M+ data points and constrained only by the *statistical signature* of quantum chaos (the RMT priors), is free to discover a "true" internal mechanism that we (as human researchers), may not even have the language for yet. No known RH model has ever worked at these heights.
 
-Emergent Properties at Scale: So the RH *is* a statement about all zeros N ==> Infinity. This much we know. Therefore any property that allows for a sub-exponential prediction (e.g., a hidden fractal structure, a new scaling law) is almost certainly an emergent property that is only visible at massive heights. Team 1 is permanently blind to these emergent, high-N phenomena. Team 2 is the only one of the two that has a JWST lens powerful enough to see them, if there.
+Emergent Properties at Scale: So the RH *is* a statement about all zeros N => Infinity. This much we know. Therefore any property that allows for a sub-exponential prediction (e.g., a hidden fractal structure, a new scaling law) is almost certainly an emergent property that is only visible at these massive heights, or not. That is the quest. Team 1 is permanently blind to these emergent, high-N phenomena. Team 2 is the only one of that has a JWST lens powerful enough to see them, if there.
 
-The model operationalizes a novel dynamical framework by merging Renormalization Group (RG) flows with Graph Neural Networks (GNNs). The GNN models the "Primal Manifold," a profinite space encoding primes as topological defects, while physics-informed losses enforce theoretical priors from Random Matrix Theory (RMT) and QFT scale-invariance.
+The model operationalizes a novel dynamical framework by merging Renormalization Group (RG) flows with Graph Neural Networks (GNNs). See this repo for the math [Primal Manifold and RG]([https://github.com/XORBKPT/Riemann-Hypothesis]). The GNN models this "Primal Manifold," a profinite space encoding primes as topological defects, while physics-informed losses enforce theoretical priors from Random Matrix Theory (RMT) and QFT scale-invariance.
 
 ## Overview
 
-The core hypothesis is that the zeros of the Riemann zeta function can be predicted by a GNN learning the RG flow dynamics on a graph representing the Primal Manifold. The model's components are:
+The idea is that the zeros of the Riemann zeta function can be predicted by a GNN learning the RG flow dynamics on a graph representing the Primal Manifold like this:
 
 1.  **Primal Manifold Graph:** A sparse graph where nodes are the ordinal indices of the zeros.
 2.  **Hybrid GNN-MLP:** A GNN (using `GCNConv` layers) processes the graph structure, while an MLP backbone processes the node features.
@@ -38,7 +38,7 @@ Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
 
 The `rg_penalty` loss from main_fullbatch code:
 `rg_penalty = torch.mean((scaled_pred / scale_factor - pred)**2)`
-needs *two full-graph forward passes* to compute; all good in full-batch.
+needs *two full-graph forward passes* to compute; fine in full-batch.
 
 In the mini-batch, its computationally infeasible. We *cannot* check a *global* scale-invariance property using a small subgraph.
 
@@ -92,13 +92,13 @@ The script will generate the first 10,000 (or more) zeros and save them to `zeta
 
 We use the `main_fullbatch.py` script for this, as it contains the generation helper.
 
-*For larger data sets use generate_and_save_zeros.md*
+*For larger data sets use generate_and_save_zeros in this repo its waaaay faster*
 
 ```bash
 # Generate the first 10,000 zeros
 python main_fullbatch.py --generate_zeros=10000
 ```
-*Note: Generating 10k zeros can take several minutes. Generating 100k+ can take hours.*
+*Note: Generating 10k zeros can take several minutes. Generating 100k+ can some hours.*
 
 ### Step 2 (Option A): Run the Full-Batch Model
 
@@ -134,12 +134,12 @@ This script will:
 ├── main_fullbatch.py   # Full-batch model (Baseline, N<=50k)
 ├── main_minibatch.py   # Mini-batch model (Scalable, N~1M+)
 ├── README.md           # This file
-|
+|--other bits and notes
 ├── zeta_zeros_10k.txt  # Data file (generated)
 └── clusters/           # Directory for PyG clusters (generated)
 ```
 
-## Next Steps
+## Next Steps For the Curious
 
 * **Scaling $N$:** Use the `main_minibatch.py` framework to train on N=10^5, 10^6 ....to check for emergent statistical anomalies at extreme heights.
 * **Full Adelic Graph:** Enhance the `create_sparse_adelic_graph` function to model the full adelic space, incorporate the "archimedean" component or more complex p-adic topologies.
