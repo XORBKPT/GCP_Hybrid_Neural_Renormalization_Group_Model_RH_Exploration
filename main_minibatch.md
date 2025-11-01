@@ -6,7 +6,7 @@ The challenge in mini-batching is **preserving the loss structure**.
   * `RG` penalty is a *global* property of the model (comparing two full-graph forward passes). No good with mini-batching.
   * `GUE` (NLL/MMD) losses are *structured*; they depend on **contiguous spacings** between adjacent zeros (`pred[i+1] - pred[i]`).
 
-A standard `NeighborLoader` (like for GraphSAGE) *will not work* (it samples random neighbors, breaking ordinal structure). So, we partition the graph into **contiguous-ish subgraphs**. We trying number theory and fundamental physics rather than just "data fitting".
+A standard `NeighborLoader` (like for GraphSAGE) *will not work* (it samples random neighbors, breaking ordinal structure). So, partition the graph into **contiguous-ish subgraphs**.
 
  *`ClusterLoader`** from PyTorch Geometric uses graph clustering (like METIS) to partition the graph. As the Primal Manifold graph has strong `(i, i+1)` path edges, the clusters will be highly likely to contain large, contiguous blocks of nodes (e.g., nodes 1000-1200).
 
@@ -426,4 +426,5 @@ if __name__ == '__main__':
     print(f"Predicted {NUM_ZEROS + 1}-st zero: {predicted_next:.4f} (actual {actual_next:.4f})")
 
 ```
+Note: we are trying number theory and fundamental physics rather than "just data fitting".
 93E3 BEBC C164 D766
