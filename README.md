@@ -1,4 +1,4 @@
-**Research code for a hybrid machine learning model aimed at verifying the Riemann Hypothesis at high heights.**
+## **Research code for a hybrid machine learning model aimed at verifying the Riemann Hypothesis at high heights.**
 
 The RH is a statement about infinity. Any true mechanism allowing for sub-exponential prediction is likely an emergent property that *only* manifests at massive scale. Team 2's GNN, fed with 100M+ data points and constrained only by the *statistical signature* of quantum chaos (the RMT priors), is free to discover a "true" internal mechanism that we (as human researchers), may not even have the language for yet. No known RH model has ever worked at these heights.
 
@@ -6,7 +6,7 @@ Emergent Properties at Scale: So the RH *is* a statement about all zeros N => In
 
 The model operationalizes a novel dynamical framework by merging Renormalization Group (RG) flows with Graph Neural Networks (GNNs). See this repo for the math [github.com/XORBKPT/Riemann-Hypothesis](https://github.com/XORBKPT/Riemann-Hypothesis/). This GNN models the "Primal Manifold," a profinite space encoding primes as topological defects, while physics-informed losses enforce theoretical priors from Random Matrix Theory (RMT) and QFT scale-invariance.
 
-## Overview
+## Basics
 
 The idea is that the zeros of the Riemann zeta function can be predicted by a GNN learning the RG flow dynamics on a graph representing the Primal Manifold like this:
 
