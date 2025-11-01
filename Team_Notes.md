@@ -32,7 +32,7 @@ The question: **Is the `rg_penalty` essential, or can the RMT priors alone guide
 
 -----
 
-## (b) GCP Recommendations for Scale Research
+## GCP for Research at Scale
 
 Get **answers as fast as possible**.
 
