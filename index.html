@@ -235,7 +235,7 @@ blob.upload_from_filename(local_file)
                     <div class="card-content prose-custom">
                         <p><strong>Goal:</strong> Test theoretical purity. Validates the QFT-inspired hypothesis by including a global `rg_penalty`.</p>
                         <p><strong>Strategy:</strong> <span class="highlight">Scale-Up</span>. A single, massive <strong>A100 80GB</strong> GPU to load the *entire* graph ($N=10k, 50k$) into VRAM. This is VRAM-bound.</p>
-                        <p><strong>Role:</strong> Validation & control group. Proves whether the `rg_penalty` loss provides any actual benefit at a scale where it's still computable. Can go higher with more compute but even at 200k it is still a tiny speck on infinity right?</p>
+                        <p><strong>Role:</strong> Validation & control group. Proves whether the `rg_penalty` loss provides any actual benefit at a scale where it's still computable. At 200k still a speck on infiity.</p>
                         
                         <h3>Key Code: `rg_loss_full`</h3>
                         <pre><code><span class="comment"># This loss function runs on the FULL graph</span>
