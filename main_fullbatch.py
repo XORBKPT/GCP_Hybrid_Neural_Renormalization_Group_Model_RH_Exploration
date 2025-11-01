@@ -12,7 +12,7 @@ and RG-flow penalty.
 Sparse matrices handle N=10,000+ nodes in a single batch, 
 suitable for high-memory GPU instances (e.g., GCP A100).
 
-Includes the physics-informed losses:
+Includes physics-informed losses (check math XORBKPT repo for the theory):
 1. MSE (Accuracy)
 2. RG-Flow Penalty (Scale Invariance)
 3. GUE-NLL (RMT Prior)
