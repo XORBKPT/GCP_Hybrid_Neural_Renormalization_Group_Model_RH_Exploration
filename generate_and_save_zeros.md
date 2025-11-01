@@ -1,36 +1,34 @@
-Yes. This is a perfect use case for a "fan-out" parallel architecture.
+The `generate_and_save_zeros` function is an **embarrassingly parallel** task: computing zero n=90,000,000 has zero dependence on zero n=10. So don't go all IT trad with **serial**, doing them one by one. On a single core, this would take months (or years, like IT).
 
-The `generate_and_save_zeros` function is what's known as an **embarrassingly parallel** task: computing zero $n=90,000,000$ has zero dependence on zero $n=10$. Your current script is **serial**, doing them one by one. On a single core, this would take months or years.
+**100,000+ parallel jobs** running simultaneously on **GCP Batch** is way cooler, cheaper and kicks a*s. Instead of one machine taking months, 10,000 machines will each work for a few minutes. This flips an "impossible" data generation task into something that completes on a lazy Sunday after Halloween.
 
-We will adapt this by turning your serial `for` loop into **100,000+ parallel jobs** running simultaneously on **GCP Batch**. Instead of one machine taking months, 10,000 machines will each work for a few minutes. This will turn this "impossible" data generation task into something that completes in an afternoon.
-
-This architecture is extremely cost-effective (likely a few hundred dollars, not your full $50k budget) and is the standard way to handle "big compute" data generation at Google.
+Cost-effective (about a few hundred dollars, check-in with your IT admin and say *"I have found a way to reduce the cost by 100k USD"* and they usually say *"cool! ok!"*) but anyhow this is the standard way to handle "big compute" data generation at Google.
 
 -----
 
-## 🚀 The Parallel Data Generation Architecture
+## Parallel Data Generation Architecture
 
-This is the "map-reduce" pattern. We'll *map* the work across thousands of small CPUs and then *reduce* the results into one file.
+This is the "map-reduce" pattern. We'll *map* the work across thousands of small CPUs and then *reduce* the results into one file. Map Reduce you probably learnt long agot, nothing new in principle but using it like this across thousands of machines is still surprisingly new for some. Here's the easy way on GCP:
 
 1.  **Controller (Your Laptop):** A simple Python script that *dispatches* the work. It generates 100,000 "work items" (e.g., "compute zeros 1-1000", "compute 1001-2000", ...) and submits them to GCP Batch.
 2.  **GCS Bucket (Data Storage):** A central bucket will store two things:
       * `/parts/`: A folder to receive the 100,000+ small text files from the workers.
       * `/final/`: The destination for the final, aggregated `zeta_zeros_100M.txt` file.
-3.  **Worker (`worker.py` + Docker):** This is the heart of the operation. It's a simple Python script, based on your `mpmath` code, that is containerized with Docker. It's designed to:
+3.  **Worker (`worker.py` + Docker):** The core operation. It's a simple Python script, based on the previous `mpmath` code, just containerized with Docker:
       * Wake up.
       * Read its assigned task (e.g., `START_N=1001`, `END_N=2000`).
       * Compute *only* those 1,000 zeros.
       * Write them to a *unique* file (e.g., `zeros_0000001001.txt`).
       * Upload that file to the GCS `/parts/` folder.
       * Shut down.
-4.  **GCP Batch (The "Foreman"):** This fully-managed service does all the orchestration. You tell it "run 100,000 copies of my 'Worker' container" and it handles provisioning the VMs, running the jobs, retrying failures, and scaling down.
-5.  **Aggregator (`aggregator.py`):** A final, single job that runs *after* all workers are done. It lists all 100,000+ files in `/parts/`, downloads and concatenates them *in the correct numerical order*, and streams the final 100M-line file back to `/final/zeta_zeros_100M.txt`.
+4.  **GCP Batch:** This fully-managed service does all the orchestration. You tell it "run 100,000 copies of my 'Worker' container" and it provisions the VMs, running the jobs, retrying failures, and scaling down.
+5.  **Aggregator (`aggregator.py`):** Final, single job that runs *after* all workers are done. It lists all 100,000+ files in `/parts/`, downloads and concatenates them *in the correct numerical order*, and streams the final 100M-line file back to `/final/zeta_zeros_100M.txt`.
 
 -----
 
-## 1\. The Worker (`worker.py`)
+## 1\. Worker (`worker.py`)
 
-This script is the "work" to be done. It's parameterized using environment variables.
+The "work" to be done. Like one of those thingies in the Matrix. Parameterized using environment variables.
 
 ```python
 # worker.py
@@ -94,9 +92,9 @@ except Exception as e:
 print("--- Zeta Zero Worker Finished ---")
 ```
 
-## 2\. The Worker Environment (`Dockerfile`)
+## 2\. Worker Environment (`Dockerfile`)
 
-We need to package `worker.py` and its dependencies (`mpmath`, `google-cloud-storage`).
+Package `worker.py` and its dependencies (`mpmath`, `google-cloud-storage`).
 
 ```dockerfile
 # Dockerfile
@@ -113,7 +111,7 @@ COPY worker.py .
 ENTRYPOINT ["python", "worker.py"]
 ```
 
-**To build and push this (one-time setup):**
+**Build and push this (one-time setup):**
 
 ```bash
 # Enable the services
@@ -139,9 +137,9 @@ docker push europe-west4-docker.pkg.dev/<YOUR-GCP-PROJECT-ID>/zeta-workers/zeta-
 
 -----
 
-## 3\. The Controller (`controller.py`)
+## 3\. Controller (`controller.py`)
 
-This is the script you run on your local machine. It generates all the jobs and submits them to GCP Batch.
+Run on your local machine. It generates all the jobs and submits them to GCP Batch. If you were ever a Unix sysadmin this is similar but with insane amounts of power at your fingertips <80).
 
 ```python
 # controller.py
@@ -227,9 +225,9 @@ if __name__ == "__main__":
 
 -----
 
-## 4\. The Aggregator (`aggregator.py`)
+## 4\. Aggregator (`aggregator.py`)
 
-After GCP Batch shows all jobs are complete, run this *once* (e.g., from a powerful Vertex AI Workbench notebook).
+After GCP Batch shows all jobs are complete, run this *once* (e.g., from a decent GCP Vertex AI Workbench notebook).
 
 ```python
 # aggregator.py
