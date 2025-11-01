@@ -28,7 +28,7 @@ Choice: **scale-up vs. scale-out** - do both - an exploration with A/B testing.
   * **Focus:** You must push $N$ as high as possible 100k, 1M.. to see if new statistical patterns or anomalies emerge at heights no one has ever modeled this way.
   * **Challenge:** Ensure the RMT loss, computed on *contiguous blocks within clusters*, is a stable-enough signal.
 
-The question: **Is the `rg_penalty` essential, or can the RMT priors alone guide the model at N=1M ?** Team 1 and Team 2 will be able answer this together.
+The question: **Is the `rg_penalty` essential, or can the RMT priors alone guide the model at N=1M ?** 1 + 2 will be able answer this together.
 
 -----
 
@@ -41,7 +41,7 @@ Get **answers as fast as possible**.
 1.  **Project & Data:**
 
       * **Service:** Use **Vertex AI**. Do not manually manage VMs (GCE). Vertex AI is Google's managed platform, built for this kind of work.
-      * **Data Storage:** Create a **Google Cloud Storage (GCS) Bucket**. Store your `zeta_zeros_10k.txt` (and later, your 1M zero file) here. Training jobs will read directly from this bucket.
+      * **Data Storage:** Create a **Google Cloud Storage (GCS) Bucket**. Store your `zeta_zeros_10k.txt` (and later, the mega 1M zero file) here. Training jobs read directly from this bucket.
       * **Code Repository:** Use **Artifact Registry** to store your custom Docker container images; scientifically useful (reproducible).
 
 2.  **Environment (Container):**
@@ -72,7 +72,7 @@ Get **answers as fast as possible**.
           * Test the *true* full-batch model with the `rg_penalty`.
       * **Cons:**
           * Expensive.
-          * Will *never* scale to N=1M. Faila with an "Out-of-Memory" (OOM) error.
+          * Will *never* scale to N=1M. Fails with an "Out-of-Memory" (OOM) error.
 
 -----
 
