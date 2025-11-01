@@ -1,12 +1,12 @@
-93E3 BEBC C164 D766
+*see [github.com/XORBKPT/Riemann-Hypothesis](https://github.com/XORBKPT/Riemann-Hypothesis/) for the math theory*
 
-The primary challenge in mini-batching is **preserving the loss structure**.
+The challenge in mini-batching is **preserving the loss structure**.
 
   * `MSE` loss is fine; it's node-wise.
-  * `RG` penalty is a *global* property of the model (comparing two full-graph forward passes). This is incompatible with mini-batching and must be removed or reformulated.
+  * `RG` penalty is a *global* property of the model (comparing two full-graph forward passes). This is incompatible with mini-batching and must be removed / reformulated.
   * `GUE` (NLL/MMD) losses are *structured*; they depend on **contiguous spacings** between adjacent zeros (`pred[i+1] - pred[i]`).
 
-A standard `NeighborLoader` (like for GraphSAGE) *will not work* (it samples random neighbors, breaking ordinal structure). So, partition the graph into **contiguous-ish subgraphs**.
+A standard `NeighborLoader` (like for GraphSAGE) *will not work* (it samples random neighbors, breaking ordinal structure). So, we partition the graph into **contiguous-ish subgraphs**.
 
  *`ClusterLoader`** from PyTorch Geometric uses graph clustering (like METIS) to partition the graph. As the Primal Manifold graph has strong `(i, i+1)` path edges, the clusters will be highly likely to contain large, contiguous blocks of nodes (e.g., nodes 1000-1200).
 
@@ -14,9 +14,9 @@ We then modify the loss function to find these contiguous blocks *within* the mi
 
 -----
 
-### 1\. Scalable Mini-Batch Code (`main_minibatch.py`)
+### 1\. Mini-Batch Code (`main_minibatch.py`) highly scalable vs. main_fullbatch.py
 
-Needs PyTorch Geometric.
+Needs PyTorch Geometric (see reqs file)
 
 ```python
 """
