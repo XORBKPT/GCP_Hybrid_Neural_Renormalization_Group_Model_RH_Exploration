@@ -1,4 +1,4 @@
-This version is designed for a single, powerful machine (GCP instances) and implements the sparse graph, the MMD "Hamiltonian simulation" loss, and RG-flow penalty, within the full-batch framework. Check the repo here for the math theory [github.com/XORBKPT/Riemann-Hypothesis](https://github.com/XORBKPT/Riemann-Hypothesis/)
+This version is designed for a single, turbo machine (GCP instance) and does the sparse graph, the MMD "Hamiltonian simulation" loss, and RG-flow penalty, within the full-batch framework. Check the repo here for the math theory [github.com/XORBKPT/Riemann-Hypothesis](https://github.com/XORBKPT/Riemann-Hypothesis/)
 
 -----
 
