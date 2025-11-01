@@ -302,9 +302,9 @@ def main():
     
     loss_weights = {
         'mse': 1.0,
-        'rg': 0.1,      # Your original RG-flow weight
-        'gue_nll': 0.02,  # Your optimized GUE-NLL weight
-        'gue_mmd': 0.05   # New "Hamiltonian" loss weight (tune this)
+        'rg': 0.1,      # original RG-flow weight
+        'gue_nll': 0.02,  # optimized GUE-NLL weight
+        'gue_mmd': 0.05   # "Hamiltonian" loss weight (tune this)
     }
 
     print("[Train] Starting full-batch training on 10,000 zeros...")
