@@ -394,5 +394,3 @@ if __name__ == '__main__':
              
         main()
 ```
-
-Let me know if you have any questions about the differences or the implementation.
