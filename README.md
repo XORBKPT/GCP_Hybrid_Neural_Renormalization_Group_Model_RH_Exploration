@@ -1,4 +1,4 @@
-## **Research code hybrid ML model for verifying the Riemann Hypothesis at Very High Heights.**
+## **Research code hybrid ML model for the Riemann Hypothesis at High Heights.**
 
 The RH is a statement about infinity. Any true mechanism allowing for sub-exponential prediction is likely an emergent property that *only* manifests at massive scale. Team 2's GNN, fed with 100M+ data points and constrained only by the *statistical signature* of quantum chaos (the RMT priors), is free to discover a "true" internal mechanism that we (as human researchers), may not even have the language for yet. No known RH model has ever worked at these heights.
 
