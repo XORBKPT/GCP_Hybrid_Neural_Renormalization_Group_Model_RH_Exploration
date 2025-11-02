@@ -2,7 +2,9 @@
 
 The RH is a statement about infinity. Any true mechanism allowing for sub-exponential prediction is likely an emergent property that *only* manifests at massive scale. Team 2's GNN, fed with 100M+ data points and constrained only by the *statistical signature* of quantum chaos (the RMT priors), is free to discover a "true" internal mechanism that we (as human researchers), may not even have the language for yet. No known RH model has ever worked at these heights.
 
-Emergent Properties at Scale: So the RH *is* a statement about all zeros N => Infinity. This much we know. Therefore any property that allows for a sub-exponential prediction (e.g., a hidden fractal structure, a new scaling law) is almost certainly an emergent property that is only visible at these massive heights, or not. That is the quest. Team 1 is permanently blind to these emergent, high-N phenomena. Team 2 is the only one of that has a JWST lens powerful enough to see them, if there.
+Emergent Properties at Scale: So the RH *is* a statement about all zeros N => Infinity. This much we know. Therefore any property that allows for a sub-exponential prediction (e.g., a hidden fractal structure, a new scaling law) is almost certainly an emergent property that is only visible at these massive heights, or not. That is the quest. 
+
+Team 1 is "blind" to these emergent, high-N phenomena. Team 2 is the only one of that has a JWST lens powerful enough to see them, if there.
 
 The model operationalizes a novel dynamical framework by merging Renormalization Group (RG) flows with Graph Neural Networks (GNNs). See links on this repo README for the math [github.com/XORBKPT/Riemann-Hypothesis](https://github.com/XORBKPT/Riemann-Hypothesis/). 
 
