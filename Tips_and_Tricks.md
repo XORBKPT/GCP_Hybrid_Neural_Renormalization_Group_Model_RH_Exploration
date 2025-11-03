@@ -59,9 +59,9 @@ Divide a 4-week sprint into phases:
     * `mse_weight`: Forces the model to be *accurate* (low bias).
     * `gue_nll_weight`: A "sharp" loss. Strongly punishes *individual* spacings that are "non-GUE."
     * `gue_mmd_weight`: A "smooth" loss. Gently guides the *entire distribution* of spacings to look like GUE (low variance).
-* **Bet:** You need a balance. MMD is great for the "big picture," but NLL is the "sergeant" that enforces local discipline. Your intuition that these two are the key is spot on.
+* **Bet:** A balance. MMD is great for the "big picture," but NLL is the "sergeant" that enforces local discipline. These two are key.
 * **Plan (Feed this to Vizier):**
-    * Fix `mse_weight = 1.0` (your anchor).
+    * Fix `mse_weight = 1.0` (the anchor).
     * Define the search space for the other two. **Use a logarithmic scale.**
     * `gue_nll_weight`: `DoubleParameter(min_value=0.001, max_value=1.0, scale=LOG)`
     * `gue_mmd_weight`: `DoubleParameter(min_value=0.01, max_value=10.0, scale=LOG)`
