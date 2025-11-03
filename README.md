@@ -148,5 +148,6 @@ This script will:
 * **Scaling $N$:** Use the `main_minibatch.py` framework to train on N=10^5, 10^6 ....to check for emergent statistical anomalies at extreme heights.
 * **Full Adelic Graph:** Enhance the `create_sparse_adelic_graph` function to model the full adelic space, incorporate the "archimedean" component or more complex p-adic topologies.
 * **Hamiltonian Simulation:** The GUE-MMD loss is our "compute version" of a Hamiltonian simulation. Replace this statistical prior with a true quantum algorithm (e.g., VQE, QPE) on a QC to find the spectrum of a candidate Hilbert-Pólya operator.
+* **See Tips and Tricks in this repo <80)
 
 93E3 BEBC C164 D766
