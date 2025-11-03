@@ -6,11 +6,11 @@ The challenge in mini-batching is **preserving the loss structure**.
   * `RG` penalty is a *global* property of the model (comparing two full-graph forward passes). No good with mini-batching.
   * `GUE` (NLL/MMD) losses are *structured*; they depend on **contiguous spacings** between adjacent zeros (`pred[i+1] - pred[i]`).
 
-A standard `NeighborLoader` (like for GraphSAGE) *will not work* (it samples random neighbors, breaking ordinal structure). So, partition the graph into **contiguous-ish subgraphs**.
+A standard `NeighborLoader` (like for GraphSAGE) *will not work* (it samples random neighbors, breaking ordinal structure). So; partition the graph into **contiguous-ish subgraphs**.
 
  *`ClusterLoader`** from PyTorch Geometric uses graph clustering (like METIS) to partition the graph. As the Primal Manifold graph has strong `(i, i+1)` path edges, the clusters will be highly likely to contain large, contiguous blocks of nodes (e.g., nodes 1000-1200).
 
-We then modify the loss function to find these contiguous blocks *within* the mini-batch (cluster) and compute the RMT statistics *only* on them.
+We then modify the loss function to find contiguous blocks *within* the mini-batch (cluster) and compute the RMT statistics *only* on them.
 
 -----
 
