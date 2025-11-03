@@ -36,7 +36,7 @@ Divide a 4-week sprint into phases:
     * **Trial 3 (Richer):** `primes = [2, 3, 5, 7, 11, 13]`
     * **Trial 4 (Dense):** `primes = [2, 3, 5, 7, 11, 13, 17, 19]`
     * **Trial 5 (Wildcard):** `primes = [11, 13, 17, 19]` (Does the *scale* of primes matter, or just the connectivity?)
-* **Decision:** Pick the graph that shows the fastest, most stable loss decrease. My intuition is **Trial 3 (`[2, 3, 5, 7, 11, 13]`)** is the sweet spot.
+* **Decision:** Pick the graph that shows the fastest, most stable loss decrease: **Trial 3 (`[2, 3, 5, 7, 11, 13]`)** is the sweet spot.
 * **Action:** **Freeze this graph structure** for all 50 machines for the rest of the sprint.
 
 **Knob 2: Learning Rate & Scheduler**
@@ -80,7 +80,7 @@ Divide a 4-week sprint into phases:
 * **Team 1 (A100):** Run the *winning* HPO parameters on the full-batch $N=50k$ dataset. This is the Team 1 **control experiment**.
 * **Team 2 (L4 Swarm):** Take your Top 10 HPO configs. Dedicate 5 L4s to *each* config (`5 * 10 = 50 machines`). Now, instead of 50 epochs, you let them run for **1000 epochs** or until they fully converge.
 
-### Success is...
+### Success is:
 
 **Do not use training loss as the metric for Vizier. Bad idea, I know, we usually do, but not here:**
 
@@ -96,4 +96,4 @@ Divide a 4-week sprint into phases:
     * The `MSE` of *only these 100 future zeros* is the "Extrapolation Error."
     * **Report this "Extrapolation Error" to Vizier.**
 
-This forces the 50-machine swarm to optimize just for: **Finding the model that best predicts the future. That's all.** 
+This forces the 50-machine swarm to optimize for: **Finding the model that best predicts the future. That's all.** 
