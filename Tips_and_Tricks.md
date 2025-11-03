@@ -80,13 +80,14 @@ Divide a 4-week sprint into phases:
 * **Team 1 (A100):** Run the *winning* HPO parameters on the full-batch $N=50k$ dataset. This is the Team 1 **control experiment**.
 * **Team 2 (L4 Swarm):** Take your Top 10 HPO configs. Dedicate 5 L4s to *each* config (`5 * 10 = 50 machines`). Now, instead of 50 epochs, you let them run for **1000 epochs** or until they fully converge.
 
-### How to Measure "Success"
+### Success is...
 
-**Do not use training loss as your metric for Vizier. Bas idea, I know we usually do but don't**
+**Do not use training loss as the metric for Vizier. Bad idea, I know, we usually do, but not here:**
 
-The goal is *extrapolation*. A model that overfits to be *perfectly* accurate at $N=100M$ is useless - yep I know this is what we usually do but its the opposite here:
+*The goal is extrapolation. A model that overfits to be *perfectly* accurate at $N=100M$ is useless* here's why:
 
-**Success metric for Vizier MUST be one of these:**
+**Success metric for Vizier will logically be one of these:**
+
 1.  **Good (Standard):** `validation_loss` (loss on the held-out validation set).
 2.  **Better (The Real Goal):** A custom "Extrapolation Error" metric.
     * In the training loop, *at the end of every epoch*, freeze the model.
