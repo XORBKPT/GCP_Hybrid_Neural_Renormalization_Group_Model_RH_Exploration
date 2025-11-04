@@ -14,7 +14,7 @@ Swarm can be managed by **Vertex AI Vizier**, Google's "black-box" Bayesian hype
 4.  When the trial is done (e.g., after 100 epochs), report the *result* (your metric, e.g., "validation loss" or "extrapolation error") back to Vizier.
 5.  Vizier uses Bayesian optimization to intelligently learn from that result and suggest the *next*, more promising set of parameters for the next free machine.
 
-Instead of a a 50-machine "swarm" brute-force grid search into guided search that will find the optimal balance of the two forces.
+Instead of a a 50-machine "swarm" brute-force grid search, do *guided* search that will find the optimal balance of the two forces.
 
 ---
 
